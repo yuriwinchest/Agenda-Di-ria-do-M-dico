@@ -22,32 +22,40 @@ interface ServiceItem {
 const FinanceView: React.FC = () => {
     const [selectedPatientId, setSelectedPatientId] = useState<string>('1');
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('credit');
+    const [activeTab, setActiveTab] = useState<'pending' | 'paid' | 'refund'>('pending');
 
     const queueItems: QueueItem[] = [
         { id: '1', name: 'Ana Silva', time: '14:30', service: 'Consulta Rotina - Dr. Mendes', insurance: 'Particular', value: 350.00, status: 'pending' },
         { id: '2', name: 'Carlos Souza', time: '15:00', service: 'Exame Cardiológico', insurance: 'Unimed', value: 0.00, status: 'pending' },
         { id: '3', name: 'Mariana Costa', time: '15:15', service: 'Retorno', insurance: 'Particular', value: 150.00, status: 'pending' },
         { id: '4', name: 'Roberto Lima', time: '15:45', service: 'Raio-X Torax', insurance: 'SulAmérica', value: 45.00, status: 'pending' },
+        // Mock Paid Items
+        { id: '5', name: 'Fernanda Oliveira', time: '10:00', service: 'Dermatologia', insurance: 'Particular', value: 200.00, status: 'paid' },
+        { id: '6', name: 'Lucas Pereira', time: '11:30', service: 'Ortopedia', insurance: 'Bradesco', value: 0.00, status: 'paid' },
+        // Mock Refund Items
+        { id: '7', name: 'Juliana Santos', time: '09:00', service: 'Consulta Cancelada', insurance: 'Particular', value: 350.00, status: 'refund' },
     ];
 
     const serviceItems: ServiceItem[] = [
         { id: '1', description: 'Consulta Rotina - Dr. Mendes', category: 'Clínica Geral', quantity: 1, unitValue: 350.00 }
     ];
 
+    const filteredQueue = queueItems.filter(item => item.status === activeTab);
+
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
     };
 
     return (
-        <div className="flex flex-col h-full gap-6">
-            <div className="flex items-center gap-3">
+        <div className="flex flex-col h-full gap-6 overflow-y-auto pb-6">
+            <div className="flex items-center gap-3 shrink-0">
                 <h1 className="text-xl font-bold text-slate-900">Caixa - Recepção</h1>
                 <span className="bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-0.5 rounded">Caixa Aberto</span>
             </div>
 
-            <div className="flex flex-col lg:flex-row gap-6 h-full overflow-hidden">
+            <div className="flex flex-col lg:flex-row gap-6 h-auto min-h-0">
                 {/* Left Panel - Queue */}
-                <div className="w-full lg:w-96 flex flex-col gap-4 shrink-0">
+                <div className="w-full lg:w-96 flex flex-col gap-4 shrink-0 h-fit lg:sticky lg:top-0">
                     <h2 className="text-lg font-semibold text-slate-800">Fila de Atendimento</h2>
 
                     <div className="relative">
@@ -60,13 +68,28 @@ const FinanceView: React.FC = () => {
                     </div>
 
                     <div className="flex p-1 bg-slate-100 rounded-lg">
-                        <button className="flex-1 bg-white text-slate-900 text-sm font-medium py-1.5 rounded shadow-sm">Aguardando</button>
-                        <button className="flex-1 text-slate-500 text-sm font-medium py-1.5 hover:text-slate-700">Pagos</button>
-                        <button className="flex-1 text-slate-500 text-sm font-medium py-1.5 hover:text-slate-700">Reembolso</button>
+                        <button
+                            onClick={() => setActiveTab('pending')}
+                            className={`flex-1 text-sm font-medium py-1.5 rounded transition-all ${activeTab === 'pending' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Aguardando
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('paid')}
+                            className={`flex-1 text-sm font-medium py-1.5 rounded transition-all ${activeTab === 'paid' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Pagos
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('refund')}
+                            className={`flex-1 text-sm font-medium py-1.5 rounded transition-all ${activeTab === 'refund' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Reembolso
+                        </button>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto flex flex-col gap-3 pr-1">
-                        {queueItems.map(item => (
+                    <div className="flex flex-col gap-3">
+                        {filteredQueue.map(item => (
                             <div
                                 key={item.id}
                                 onClick={() => setSelectedPatientId(item.id)}
@@ -86,11 +109,16 @@ const FinanceView: React.FC = () => {
                                 </div>
                             </div>
                         ))}
+                        {filteredQueue.length === 0 && (
+                            <div className="text-center py-8 text-slate-500 text-sm">
+                                Nenhum item encontrado.
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 {/* Right Panel - Detail */}
-                <div className="flex-1 flex flex-col gap-6 overflow-y-auto pr-1">
+                <div className="flex-1 flex flex-col gap-6 h-fit">
                     {/* Patient Section */}
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col md:flex-row gap-6 items-start">
                         <div className="w-20 h-20 rounded-full bg-orange-100 flex items-center justify-center shrink-0">

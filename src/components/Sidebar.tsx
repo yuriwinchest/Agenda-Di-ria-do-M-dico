@@ -29,16 +29,20 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate, isCollapsed,
             <div className={cn("flex items-center gap-3", isCollapsed ? "justify-center p-4" : "p-6")}>
                 <div
                     onClick={toggleCollapse}
-                    className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-md shadow-blue-200 shrink-0 cursor-pointer hover:bg-blue-700 transition-colors"
+                    className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 cursor-pointer overflow-hidden transition-all hover:ring-2 hover:ring-blue-100"
                 >
-                    <span className="material-symbols-outlined text-white" style={{ fontSize: '24px' }}>
-                        {isCollapsed ? 'menu' : 'add'}
-                    </span>
+                    {isCollapsed ? (
+                        <span className="material-symbols-outlined text-blue-600" style={{ fontSize: '28px' }}>
+                            menu
+                        </span>
+                    ) : (
+                        <img src="/src/assets/logo_integraclinic.png" alt="IntegraClinic" className="w-full h-full object-contain" />
+                    )}
                 </div>
                 {!isCollapsed && (
                     <div className="flex flex-col overflow-hidden whitespace-nowrap">
-                        <h1 className="text-slate-900 text-base font-bold leading-tight">Clínica Saúde</h1>
-                        <p className="text-slate-400 text-xs font-normal">Painel da Recepção</p>
+                        <h1 className="text-slate-900 text-lg font-bold leading-tight tracking-tight">IntegraClinic</h1>
+                        <p className="text-slate-500 text-xs font-medium">Gestão Inteligente</p>
                     </div>
                 )}
             </div>
