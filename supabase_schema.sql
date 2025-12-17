@@ -13,7 +13,8 @@ create table if not exists public.patients (
   insurance_provider text default 'Particular', -- e.g. Unimed, SulAmérica
   insurance_number text,
   address text,
-  notes text
+  notes text,
+  gender text -- Added for full profile
 );
 
 -- 2. Doctors Table
@@ -67,16 +68,83 @@ create table if not exists public.invoice_items (
   total_price numeric(10,2) generated always as (quantity * unit_price) stored
 );
 
--- Row Level Security (RLS) - Basic Setup (Open for now, recommend locking down later)
+-- 6. Services / Procedures (Tabela de Serviços)
+create table if not exists public.services (
+  id uuid default uuid_generate_v4() primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  name text not null, -- e.g. "Consulta Cardiológica"
+  description text,
+  price numeric(10,2) not null,
+  duration_minutes integer default 30,
+  specialty text -- Filters services by doctor specialty
+);
+
+-- 7. Medical Records (Prontuário Eletrônico)
+create table if not exists public.medical_records (
+  id uuid default uuid_generate_v4() primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  patient_id uuid references public.patients(id) on delete cascade,
+  doctor_id uuid references public.doctors(id) on delete set null,
+  appointment_id uuid references public.appointments(id) on delete set null,
+  date timestamp with time zone default now(),
+  type text default 'evolution', -- anamnesis, evolution, prescription, exam_result
+  content text not null, -- Rich text or JSON content
+  attachments text[], -- Array of URLs
+  diagnosis_cid text -- CID-10 code if applicable
+);
+
+-- 8. Clinic Settings (Configurações)
+create table if not exists public.clinic_settings (
+  id uuid default uuid_generate_v4() primary key,
+  updated_at timestamp with time zone default timezone('utc'::text, now()),
+  clinic_name text default 'Minha Clínica',
+  logo_url text,
+  primary_color text default '#2563eb',
+  address text,
+  contact_email text,
+  contact_phone text,
+  business_hours jsonb -- Structured opening hours
+);
+
+-- 9. Profiles (Link Auth Users to Staff Roles)
+create table if not exists public.profiles (
+  id uuid references auth.users on delete cascade primary key,
+  email text,
+  full_name text,
+  role text default 'receptionist' check (role in ('admin', 'doctor', 'receptionist', 'nurse')),
+  doctor_id uuid references public.doctors(id) on delete set null, -- If user is a doctor, link to doctor profile
+  created_at timestamp with time zone default timezone('utc'::text, now())
+);
+
+-- 10. Goals/Targets (Metas para Relatórios)
+create table if not exists public.specialty_targets (
+  id uuid default uuid_generate_v4() primary key,
+  specialty text not null,
+  month date not null, -- First day of the month
+  revenue_target numeric(10,2),
+  appointments_target integer
+);
+
+-- Row Level Security (RLS) - Basic Setup
 alter table public.patients enable row level security;
 alter table public.doctors enable row level security;
 alter table public.appointments enable row level security;
 alter table public.transactions enable row level security;
 alter table public.invoice_items enable row level security;
+alter table public.services enable row level security;
+alter table public.medical_records enable row level security;
+alter table public.clinic_settings enable row level security;
+alter table public.profiles enable row level security;
+alter table public.specialty_targets enable row level security;
 
--- Policies (Allow all for development - BE CAREFUL IN PRODUCTION)
+-- Policies (Allow all for development)
 create policy "Enable all access for anon" on public.patients for all using (true);
 create policy "Enable all access for anon" on public.doctors for all using (true);
 create policy "Enable all access for anon" on public.appointments for all using (true);
 create policy "Enable all access for anon" on public.transactions for all using (true);
 create policy "Enable all access for anon" on public.invoice_items for all using (true);
+create policy "Enable all access for anon" on public.services for all using (true);
+create policy "Enable all access for anon" on public.medical_records for all using (true);
+create policy "Enable all access for anon" on public.clinic_settings for all using (true);
+create policy "Enable all access for anon" on public.profiles for all using (true);
+create policy "Enable all access for anon" on public.specialty_targets for all using (true);

@@ -16,6 +16,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate, isCollapsed,
         { id: 'patients', icon: 'person', label: 'Pacientes' },
         { id: 'doctors', icon: 'medical_services', label: 'Médicos' },
         { id: 'finance', icon: 'credit_card', label: 'Financeiro' },
+        { id: 'reports', icon: 'bar_chart', label: 'Relatórios' },
         { id: 'settings', icon: 'settings', label: 'Configurações' },
     ];
 
