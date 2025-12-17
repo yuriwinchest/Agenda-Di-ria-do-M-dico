@@ -1,12 +1,15 @@
 import React from 'react';
 import { ViewType } from '../types';
+import { cn } from '../lib/utils';
 
 interface SidebarProps {
     currentView: ViewType;
     onNavigate: (view: ViewType) => void;
+    isCollapsed: boolean;
+    toggleCollapse: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate, isCollapsed, toggleCollapse }) => {
     const menuItems: { id: ViewType; icon: string; label: string }[] = [
         { id: 'calendar', icon: 'calendar_month', label: 'Agenda' },
         { id: 'patients', icon: 'person', label: 'Pacientes' },
@@ -16,39 +19,57 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate }) => {
     ];
 
     return (
-        <aside className="w-64 bg-white border-r border-slate-200 flex flex-col h-full shrink-0 transition-all duration-300 font-sans">
+        <aside
+            className={cn(
+                "bg-white border-r border-slate-200 flex flex-col h-full shrink-0 transition-all duration-300 ease-in-out font-sans",
+                isCollapsed ? "w-20" : "w-64"
+            )}
+        >
             {/* Logo Area */}
-            <div className="p-6 flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-md shadow-blue-200 shrink-0">
-                    <span className="material-symbols-outlined text-white" style={{ fontSize: '24px' }}>add</span>
+            <div className={cn("flex items-center gap-3", isCollapsed ? "justify-center p-4" : "p-6")}>
+                <div
+                    onClick={toggleCollapse}
+                    className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-md shadow-blue-200 shrink-0 cursor-pointer hover:bg-blue-700 transition-colors"
+                >
+                    <span className="material-symbols-outlined text-white" style={{ fontSize: '24px' }}>
+                        {isCollapsed ? 'menu' : 'add'}
+                    </span>
                 </div>
-                <div className="flex flex-col">
-                    <h1 className="text-slate-900 text-base font-bold leading-tight">Clínica Saúde</h1>
-                    <p className="text-slate-400 text-xs font-normal">Painel da Recepção</p>
-                </div>
+                {!isCollapsed && (
+                    <div className="flex flex-col overflow-hidden whitespace-nowrap">
+                        <h1 className="text-slate-900 text-base font-bold leading-tight">Clínica Saúde</h1>
+                        <p className="text-slate-400 text-xs font-normal">Painel da Recepção</p>
+                    </div>
+                )}
             </div>
 
             {/* Navigation */}
-            <nav className="flex flex-col gap-1 px-4 mt-2 flex-1">
+            <nav className={cn("flex flex-col gap-1 mt-2 flex-1", isCollapsed ? "px-2" : "px-4")}>
                 {menuItems.map((item) => {
-                    const active = currentView === item.id || (item.id === 'patients' && currentView === 'records'); // Keep patients selected for records sub-view if needed
+                    const active = currentView === item.id || (item.id === 'patients' && currentView === 'records');
                     return (
-                        <button 
+                        <button
                             key={item.id}
                             onClick={() => onNavigate(item.id)}
-                            className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-all w-full text-left group ${
-                                active ? 'bg-blue-50 text-blue-600 font-medium' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700 font-medium'
-                            }`}
+                            className={cn(
+                                "flex items-center gap-3 py-3 rounded-lg transition-all w-full group relative",
+                                isCollapsed ? "justify-center px-0 hover:bg-slate-50" : "px-3 text-left",
+                                active ? "bg-blue-50 text-blue-600 font-medium" : "text-slate-500 hover:bg-slate-50 hover:text-slate-700 font-medium"
+                            )}
+                            title={isCollapsed ? item.label : ''}
                         >
-                            <span 
-                                className={`material-symbols-outlined ${active ? 'fill-1' : ''}`} 
+                            <span
+                                className={cn("material-symbols-outlined transition-all", active ? 'fill-1' : '')}
                                 style={{ fontSize: '22px' }}
                             >
                                 {item.icon}
                             </span>
-                            <span className="text-sm">
-                                {item.label}
-                            </span>
+
+                            {!isCollapsed && (
+                                <span className="text-sm overflow-hidden whitespace-nowrap">
+                                    {item.label}
+                                </span>
+                            )}
                         </button>
                     );
                 })}
@@ -56,15 +77,20 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate }) => {
 
             {/* Bottom Profile */}
             <div className="p-4 border-t border-slate-100 mt-auto">
-                <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer">
-                    <div 
-                        className="bg-center bg-no-repeat bg-cover rounded-full w-10 h-10 border border-slate-200"
+                <div className={cn(
+                    "flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer",
+                    isCollapsed ? "justify-center" : ""
+                )}>
+                    <div
+                        className="bg-center bg-no-repeat bg-cover rounded-full w-10 h-10 border border-slate-200 shrink-0"
                         style={{ backgroundImage: `url("https://randomuser.me/api/portraits/women/44.jpg")` }}
                     ></div>
-                    <div className="flex flex-col">
-                        <h1 className="text-slate-900 text-sm font-bold leading-tight">Maria Silva</h1>
-                        <p className="text-slate-400 text-xs font-normal">Recepção</p>
-                    </div>
+                    {!isCollapsed && (
+                        <div className="flex flex-col overflow-hidden whitespace-nowrap">
+                            <h1 className="text-slate-900 text-sm font-bold leading-tight">Maria Silva</h1>
+                            <p className="text-slate-400 text-xs font-normal">Recepção</p>
+                        </div>
+                    )}
                 </div>
             </div>
         </aside>

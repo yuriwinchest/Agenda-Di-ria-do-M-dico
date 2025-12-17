@@ -31,9 +31,22 @@ const App: React.FC = () => {
     }
   };
 
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  // Auto-collapse on mobile/tablet or when navigating (optional UX choice, implementing based on request)
+  const handleNavigate = (view: ViewType) => {
+    setCurrentView(view);
+    setIsSidebarCollapsed(true); // "menu lateral se recolha quando uma aba seja aberta"
+  };
+
   return (
     <div className="flex h-screen bg-[#f6f7f8] overflow-hidden">
-      <Sidebar currentView={currentView} onNavigate={setCurrentView} />
+      <Sidebar
+        currentView={currentView}
+        onNavigate={handleNavigate}
+        isCollapsed={isSidebarCollapsed}
+        toggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+      />
 
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
         <Header />
