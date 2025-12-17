@@ -1,6 +1,7 @@
 import React from 'react';
 import { ViewType } from '../types';
 import { cn } from '../lib/utils';
+import logoImg from '../assets/logo_integraclinic.png';
 
 interface SidebarProps {
     currentView: ViewType;
@@ -36,7 +37,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate, isCollapsed,
                             menu
                         </span>
                     ) : (
-                        <img src="/src/assets/logo_integraclinic.png" alt="IntegraClinic" className="w-full h-full object-contain" />
+                        <img src={logoImg} alt="IntegraClinic" className="w-full h-full object-contain" />
                     )}
                 </div>
                 {!isCollapsed && (
