@@ -71,8 +71,8 @@ const FinanceView: React.FC = () => {
                                 key={item.id}
                                 onClick={() => setSelectedPatientId(item.id)}
                                 className={`p-4 rounded-xl border transition-all cursor-pointer relative ${selectedPatientId === item.id
-                                        ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500'
-                                        : 'bg-white border-slate-200 hover:border-blue-300'
+                                    ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500'
+                                    : 'bg-white border-slate-200 hover:border-blue-300'
                                     }`}
                             >
                                 <span className={`absolute top-4 right-4 text-xs font-semibold px-1.5 py-0.5 rounded ${selectedPatientId === item.id ? 'bg-blue-200 text-blue-800' : 'bg-slate-100 text-slate-600'}`}>
@@ -172,8 +172,8 @@ const FinanceView: React.FC = () => {
                                     key={method.id}
                                     onClick={() => setSelectedPaymentMethod(method.id)}
                                     className={`flex flex-col items-center justify-center gap-3 p-4 rounded-xl border-2 transition-all ${selectedPaymentMethod === method.id
-                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                            : 'border-slate-100 bg-white text-slate-600 hover:border-slate-200'
+                                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                        : 'border-slate-100 bg-white text-slate-600 hover:border-slate-200'
                                         } relative`}
                                 >
                                     {selectedPaymentMethod === method.id && (
@@ -190,7 +190,7 @@ const FinanceView: React.FC = () => {
 
                     {/* Summary Section */}
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                        <div className="flex flex-col md:flex-row gap-8 items-end">
+                        <div className="flex flex-col xl:flex-row gap-8 items-end">
                             <div className="flex-1 w-full">
                                 <h3 className="font-bold text-slate-900 mb-4 text-lg">Resumo do Pagamento</h3>
                                 <div className="space-y-3">
@@ -209,12 +209,12 @@ const FinanceView: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0">
-                                <button className="px-6 py-3 border border-slate-200 rounded-lg text-slate-700 font-semibold hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
+                            <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto shrink-0">
+                                <button className="px-6 py-3 border border-slate-200 rounded-lg text-slate-700 font-semibold hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 flex-1 xl:flex-none">
                                     <span className="material-symbols-outlined text-[20px]">receipt_long</span>
                                     Emitir Recibo
                                 </button>
-                                <button className="px-8 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 flex items-center justify-center gap-2">
+                                <button className="px-8 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 flex items-center justify-center gap-2 flex-1 xl:flex-none">
                                     <span className="material-symbols-outlined text-[20px]">check</span>
                                     Finalizar Pagamento
                                 </button>
