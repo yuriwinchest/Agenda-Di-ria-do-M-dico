@@ -35,23 +35,31 @@ const PatientSelector: React.FC<PatientSelectorProps> = ({ onSelect, initialData
 
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
-            if (searchTerm.length >= 3) {
+            if (searchTerm.length >= 1) {
                 searchPatients();
-            } else if (searchTerm.length === 0) {
+            } else {
                 setPatients([]);
             }
-        }, 500);
+        }, 400);
 
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm]);
 
     const searchPatients = async () => {
         setLoading(true);
-        const { data, error } = await supabase
+        const cleanCpf = searchTerm.replace(/\D/g, '');
+
+        let query = supabase
             .from('patients')
-            .select('id, name, cpf, phone, email, billing_type, preferred_payment_method, insurance_provider, insurance_card_number')
-            .or(`name.ilike.%${searchTerm}%,cpf.ilike.%${searchTerm}%`)
-            .limit(10);
+            .select('id, name, cpf, phone, email, billing_type, preferred_payment_method, insurance_provider, insurance_card_number');
+
+        if (cleanCpf && cleanCpf.length > 0) {
+            query = query.or(`name.ilike.%${searchTerm}%,cpf.ilike.%${cleanCpf}%`);
+        } else {
+            query = query.ilike('name', `%${searchTerm}%`);
+        }
+
+        const { data, error } = await query.limit(10);
 
         if (!error && data) {
             setPatients(data as PatientData[]);

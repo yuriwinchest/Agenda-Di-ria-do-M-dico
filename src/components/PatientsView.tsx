@@ -28,11 +28,18 @@ const PatientsView: React.FC = () => {
         setLoading(false);
     };
 
-    const filteredPatients = patients.filter(p =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.cpf?.includes(searchTerm)
-    );
+    const filteredPatients = patients.filter(p => {
+        const searchLower = searchTerm.toLowerCase();
+        const cleanSearch = searchTerm.replace(/\D/g, '');
+        const cleanPatientCpf = p.cpf?.replace(/\D/g, '') || '';
+
+        return (
+            p.name.toLowerCase().includes(searchLower) ||
+            p.email?.toLowerCase().includes(searchLower) ||
+            (cleanSearch && cleanPatientCpf.includes(cleanSearch)) ||
+            p.cpf?.includes(searchTerm)
+        );
+    });
 
     if (isRegistering) {
         return <PatientRegistration onBack={() => {

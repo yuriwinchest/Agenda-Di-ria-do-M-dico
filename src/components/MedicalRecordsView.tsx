@@ -7,6 +7,18 @@ interface PatientRecord {
     name: string;
     cpf: string;
     insurance_provider: string;
+    phone?: string;
+}
+
+interface MedicalHistoryItem {
+    id: string;
+    created_at: string;
+    content: string;
+    type: string;
+    doctor?: {
+        name: string;
+        specialty: string;
+    };
 }
 
 const MedicalRecordsView: React.FC = () => {
@@ -14,33 +26,123 @@ const MedicalRecordsView: React.FC = () => {
     const [patients, setPatients] = useState<PatientRecord[]>([]);
     const [selectedPatient, setSelectedPatient] = useState<PatientRecord | null>(null);
     const [loading, setLoading] = useState(false);
+    const [history, setHistory] = useState<MedicalHistoryItem[]>([]);
+    const [evolution, setEvolution] = useState('');
     const [isSigning, setIsSigning] = useState(false);
     const [signatureSuccess, setSignatureSuccess] = useState(false);
 
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
-            if (searchTerm.length >= 3) {
+            if (searchTerm.length >= 1) {
                 searchPatients();
+            } else {
+                setPatients([]);
             }
-        }, 500);
+        }, 400);
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm]);
 
     const searchPatients = async () => {
-        const { data } = await supabase
+        setLoading(true);
+        const cleanCpf = searchTerm.replace(/\D/g, '');
+
+        let query = supabase
             .from('patients')
-            .select('id, name, cpf, insurance_provider')
-            .or(`name.ilike.%${searchTerm}%,cpf.ilike.%${searchTerm}%`)
-            .limit(5);
+            .select('id, name, cpf, insurance_provider, phone');
+
+        if (cleanCpf && cleanCpf.length > 0) {
+            query = query.or(`name.ilike.%${searchTerm}%,cpf.ilike.%${cleanCpf}%`);
+        } else {
+            query = query.ilike('name', `%${searchTerm}%`);
+        }
+
+        const { data } = await query.limit(5);
         if (data) setPatients(data);
+        setLoading(false);
     };
 
-    const handleSignRecord = () => {
+    const fetchHistory = async (patientId: string) => {
+        setLoading(true);
+        const { data, error } = await supabase
+            .from('medical_records')
+            .select(`
+                id,
+                created_at,
+                content,
+                type,
+                doctors (
+                    name,
+                    specialty
+                )
+            `)
+            .eq('patient_id', patientId)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching history:', error);
+        } else {
+            const mapped = (data || []).map((item: any) => ({
+                id: item.id,
+                created_at: item.created_at,
+                content: item.content,
+                type: item.type,
+                doctor: item.doctors ? {
+                    name: item.doctors.name,
+                    specialty: item.doctors.specialty
+                } : undefined
+            }));
+            setHistory(mapped);
+        }
+        setLoading(false);
+    };
+
+    useEffect(() => {
+        if (selectedPatient) {
+            fetchHistory(selectedPatient.id);
+        } else {
+            setHistory([]);
+        }
+    }, [selectedPatient]);
+
+    const handleSignRecord = async () => {
+        if (!evolution || !selectedPatient) return;
+
         setIsSigning(true);
-        setTimeout(() => {
-            setIsSigning(false);
+        try {
+            // First, get an appointment_id if possible (let's find the most recent one)
+            const { data: appointments } = await supabase
+                .from('appointments')
+                .select('id')
+                .eq('patient_id', selectedPatient.id)
+                .order('appointment_date', { ascending: false })
+                .limit(1);
+
+            const appointmentId = appointments?.[0]?.id;
+
+            // Save to medical_records
+            const { error } = await supabase
+                .from('medical_records')
+                .insert([{
+                    patient_id: selectedPatient.id,
+                    appointment_id: appointmentId,
+                    content: evolution,
+                    type: 'evolution',
+                    date: new Date().toISOString()
+                }]);
+
+            if (error) throw error;
+
             setSignatureSuccess(true);
-        }, 2000);
+            setTimeout(() => {
+                setSignatureSuccess(false);
+                setIsSigning(false);
+                setEvolution('');
+                fetchHistory(selectedPatient.id);
+            }, 1000);
+        } catch (error: any) {
+            alert('Erro ao assinar prontuário: ' + error.message);
+            setIsSigning(false);
+        }
     };
 
     return (
@@ -132,17 +234,57 @@ const MedicalRecordsView: React.FC = () => {
                                 )}
                             </div>
 
-                            <div className="flex-1 p-6 overflow-y-auto">
-                                <div className="space-y-6">
-                                    <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <span className="text-xs font-bold text-blue-600 uppercase">Anamnese / Evolução</span>
-                                            <span className="text-[10px] text-slate-400">Novo Registro</span>
+                            <div className="flex-1 p-6 overflow-y-auto bg-slate-50/30">
+                                <div className="space-y-8">
+                                    {/* New Evolution Entry */}
+                                    <div className="bg-white p-6 rounded-2xl border border-blue-100 shadow-sm shadow-blue-50">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <div className="flex items-center gap-2">
+                                                <span className="material-symbols-outlined text-blue-600 text-lg">edit_note</span>
+                                                <h4 className="text-xs font-bold text-blue-900 uppercase tracking-widest">Nova Evolução</h4>
+                                            </div>
+                                            <span className="text-[10px] font-bold text-slate-400">Hoje, {new Date().toLocaleDateString('pt-BR')}</span>
                                         </div>
                                         <textarea
-                                            className="w-full bg-white border border-slate-200 rounded-lg p-3 text-sm min-h-[150px] outline-none focus:ring-2 focus:ring-blue-500"
-                                            placeholder="Descreva aqui os detalhes da consulta..."
+                                            className="w-full bg-slate-50/50 border border-slate-200 rounded-xl p-4 text-sm min-h-[120px] outline-none focus:ring-2 focus:ring-blue-500 font-medium transition-all"
+                                            placeholder="Descreva a anamnese, evolução física e conduta terapêutica..."
+                                            value={evolution}
+                                            onChange={(e) => setEvolution(e.target.value)}
                                         ></textarea>
+                                    </div>
+
+                                    {/* History Timeline */}
+                                    <div className="space-y-4">
+                                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest px-1">Histórico de Atendimentos</h4>
+
+                                        {loading ? (
+                                            <div className="flex justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div></div>
+                                        ) : history.length === 0 ? (
+                                            <div className="p-8 text-center text-slate-400 text-sm bg-white rounded-xl border border-dashed border-slate-200">
+                                                Nenhum registro anterior encontrado.
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-4">
+                                                {history.map(item => (
+                                                    <div key={item.id} className="relative pl-6 border-l-2 border-slate-100 py-2 group">
+                                                        <div className="absolute -left-[9px] top-4 w-4 h-4 rounded-full bg-white border-2 border-slate-200 group-hover:border-blue-500 transition-colors"></div>
+                                                        <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md transition-all">
+                                                            <div className="flex justify-between items-start mb-3">
+                                                                <div>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="text-xs font-bold text-slate-900">Dr(a). {item.doctor?.name || 'Médico da Clínica'}</span>
+                                                                        <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-500 text-[8px] font-bold uppercase">{item.doctor?.specialty || 'Generalista'}</span>
+                                                                    </div>
+                                                                    <p className="text-[10px] text-slate-400 mt-0.5">{new Date(item.created_at).toLocaleString('pt-BR')}</p>
+                                                                </div>
+                                                                <span className="material-symbols-outlined text-slate-300 text-lg">verified_user</span>
+                                                            </div>
+                                                            <p className="text-sm text-slate-600 leading-relaxed font-medium whitespace-pre-wrap">{item.content}</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
