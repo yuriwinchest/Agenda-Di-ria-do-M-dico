@@ -51,7 +51,7 @@ const MedicalRecordsView: React.FC = () => {
             .select('id, name, cpf, insurance_provider');
 
         if (cleanCpf && cleanCpf.length > 0) {
-            query = query.or(`name.ilike.%${searchTerm}%,cpf.ilike.%${cleanCpf}%`);
+            query = query.or(`name.ilike.*${searchTerm}*,cpf.ilike.*${cleanCpf}*`);
         } else {
             query = query.ilike('name', `%${searchTerm}%`);
         }

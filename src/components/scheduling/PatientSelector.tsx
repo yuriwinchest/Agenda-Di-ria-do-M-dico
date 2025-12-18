@@ -54,7 +54,7 @@ const PatientSelector: React.FC<PatientSelectorProps> = ({ onSelect, initialData
             .select('id, name, cpf, phone, email, insurance_provider, insurance_card_number');
 
         if (cleanCpf && cleanCpf.length > 0) {
-            query = query.or(`name.ilike.%${searchTerm}%,cpf.ilike.%${cleanCpf}%`);
+            query = query.or(`name.ilike.*${searchTerm}*,cpf.ilike.*${cleanCpf}*`);
         } else {
             query = query.ilike('name', `%${searchTerm}%`);
         }
