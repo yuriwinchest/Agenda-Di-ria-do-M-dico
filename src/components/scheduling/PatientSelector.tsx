@@ -30,6 +30,10 @@ const PatientSelector: React.FC<PatientSelectorProps> = ({ onSelect, initialData
         cpf: '',
         phone: '',
         email: '',
+        billing_type: 'Particular',
+        preferred_payment_method: 'Cartão de Crédito',
+        insurance_provider: '',
+        insurance_card_number: '',
         isNew: true
     });
 
@@ -80,7 +84,11 @@ const PatientSelector: React.FC<PatientSelectorProps> = ({ onSelect, initialData
                     name: newPatient.name,
                     cpf: newPatient.cpf,
                     phone: newPatient.phone,
-                    email: newPatient.email
+                    email: newPatient.email,
+                    billing_type: newPatient.billing_type,
+                    preferred_payment_method: newPatient.preferred_payment_method,
+                    insurance_provider: newPatient.insurance_provider,
+                    insurance_card_number: newPatient.insurance_card_number
                 }])
                 .select()
                 .single();
@@ -147,6 +155,83 @@ const PatientSelector: React.FC<PatientSelectorProps> = ({ onSelect, initialData
                             onChange={(e) => handleNewPatientChange('email', e.target.value)}
                             placeholder="email@exemplo.com"
                         />
+                    </div>
+
+                    {/* Payment Info Section */}
+                    <div className="md:col-span-2 pt-2 border-t border-slate-100 flex flex-col gap-3">
+                        <p className="text-xs font-bold uppercase text-slate-400 tracking-wider">Informações de Pagamento</p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-slate-500">Tipo de Atendimento</label>
+                                <div className="flex bg-slate-100 p-1 rounded-lg">
+                                    {['Particular', 'Convênio'].map(type => (
+                                        <button
+                                            key={type}
+                                            onClick={() => handleNewPatientChange('billing_type', type)}
+                                            className={cn(
+                                                "flex-1 py-1.5 text-xs font-semibold rounded-md transition-all",
+                                                newPatient.billing_type === type
+                                                    ? "bg-white text-blue-600 shadow-sm"
+                                                    : "text-slate-500 hover:text-slate-700"
+                                            )}
+                                        >
+                                            {type}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {newPatient.billing_type === 'Convênio' ? (
+                                <>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-medium text-slate-500">Convênio</label>
+                                        <select
+                                            className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                                            value={newPatient.insurance_provider || ''}
+                                            onChange={(e) => handleNewPatientChange('insurance_provider', e.target.value)}
+                                        >
+                                            <option value="">Selecione...</option>
+                                            <option value="Unimed">Unimed</option>
+                                            <option value="Bradesco">Bradesco Saúde</option>
+                                            <option value="Sulamérica">Sulamérica</option>
+                                            <option value="Amil">Amil</option>
+                                            <option value="Cassi">Cassi</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1 md:col-span-2">
+                                        <label className="text-xs font-medium text-slate-500">Número da Carteirinha</label>
+                                        <input
+                                            type="text"
+                                            className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                            value={newPatient.insurance_card_number || ''}
+                                            onChange={(e) => handleNewPatientChange('insurance_card_number', e.target.value)}
+                                            placeholder="Número da carteirinha"
+                                        />
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="space-y-1 md:col-span-2">
+                                    <label className="text-xs font-medium text-slate-500">Forma de Pagamento</label>
+                                    <div className="flex bg-slate-100 p-1 rounded-lg gap-1">
+                                        {['Cartão de Crédito', 'Dinheiro', 'PIX'].map(method => (
+                                            <button
+                                                key={method}
+                                                onClick={() => handleNewPatientChange('preferred_payment_method', method)}
+                                                className={cn(
+                                                    "flex-1 py-1.5 text-[10px] font-semibold rounded-md transition-all whitespace-nowrap",
+                                                    newPatient.preferred_payment_method === method
+                                                        ? "bg-white text-blue-600 shadow-sm"
+                                                        : "text-slate-500 hover:text-slate-700"
+                                                )}
+                                            >
+                                                {method}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 

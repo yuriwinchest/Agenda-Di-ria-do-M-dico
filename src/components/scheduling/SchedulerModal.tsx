@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { cn } from '../../lib/utils';
 import { supabase } from '../../lib/supabase';
 import PatientSelector, { PatientData } from './PatientSelector';
@@ -29,6 +29,12 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({ isOpen, onClose, initia
     const [observations, setObservations] = useState('');
     const [billingType, setBillingType] = useState('Particular');
     const [paymentMethod, setPaymentMethod] = useState('');
+
+    useEffect(() => {
+        if (isOpen && initialDate) {
+            setSelectedDate(initialDate);
+        }
+    }, [isOpen, initialDate]);
 
     const handleClose = () => {
         onClose();
