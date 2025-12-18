@@ -67,8 +67,28 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({ isOpen, onClose, initia
         nextStep();
     };
 
+    const isUUID = (str: string) => {
+        const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        // More lenient check for Postgres UUIDs (any version)
+        const lenientRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        return lenientRegex.test(str);
+    };
+
     const handleConfirm = async () => {
-        if (!selectedPatient || !selectedService || !selectedSlot || !selectedProcedure) return;
+        if (!selectedPatient || !selectedService || !selectedSlot || !selectedProcedure) {
+            console.error('Missing data:', { selectedPatient, selectedService, selectedSlot, selectedProcedure });
+            return;
+        }
+
+        // Validation against mock data leftover or invalid states
+        if (!isUUID(selectedPatient.id)) {
+            alert(`Erro: ID do paciente inválido (${selectedPatient.id}). Por favor, selecione o paciente novamente na busca.`);
+            return;
+        }
+        if (!isUUID(selectedService.doctor.id)) {
+            alert(`Erro: ID do médico inválido (${selectedService.doctor.id}). Por favor, tente selecionar o médico novamente.`);
+            return;
+        }
 
         setLoading(true);
         try {
@@ -101,7 +121,7 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({ isOpen, onClose, initia
                     description: `${selectedProcedure.name} - ${selectedService.doctor.name}`,
                     amount: selectedProcedure.base_price,
                     tuss_code: selectedProcedure.code,
-                    status: billingType === 'Convênio' ? 'pending' : 'pending',
+                    status: 'pending',
                     billing_status: billingType === 'Convênio' ? 'auditing' : 'pending',
                     category: 'consultation'
                 }]);
@@ -111,7 +131,8 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({ isOpen, onClose, initia
             alert('Agendamento e faturamento registrados com sucesso!');
             handleClose();
         } catch (error: any) {
-            alert('Erro ao processar agendamento: ' + error.message);
+            console.error('Submit error:', error);
+            alert('Erro ao processar agendamento: ' + (error.message || 'Erro desconhecido'));
         } finally {
             setLoading(false);
         }
@@ -131,7 +152,7 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({ isOpen, onClose, initia
                         </div>
                         <div>
                             <h2 className="text-lg font-bold text-slate-900 leading-none">Novo Agendamento</h2>
-                            <p className="text-xs text-slate-400 font-medium mt-1">Gestão de Agenda v1.1</p>
+                            <p className="text-xs text-slate-400 font-medium mt-1">Gestão de Agenda v1.2 (Real-DB)</p>
                         </div>
                     </div>
                     <button onClick={handleClose} className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-slate-600 transition-colors">
