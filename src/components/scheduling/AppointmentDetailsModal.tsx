@@ -22,6 +22,7 @@ const AppointmentDetailsModal: React.FC<AppointmentDetailsModalProps> = ({ isOpe
     const [observations, setObservations] = useState('');
     const [startTime, setStartTime] = useState('');
     const [selectedDoctorId, setSelectedDoctorId] = useState('');
+    const [appointmentDate, setAppointmentDate] = useState('');
 
     useEffect(() => {
         if (isOpen && appointmentId) {
@@ -52,6 +53,7 @@ const AppointmentDetailsModal: React.FC<AppointmentDetailsModalProps> = ({ isOpe
                 setObservations(appt.observations || '');
                 setStartTime(appt.start_time || '');
                 setSelectedDoctorId(appt.doctor_id || '');
+                setAppointmentDate(appt.appointment_date || '');
 
                 // Load patient
                 if (appt.patient_id) {
@@ -89,7 +91,8 @@ const AppointmentDetailsModal: React.FC<AppointmentDetailsModalProps> = ({ isOpe
                     status,
                     observations,
                     start_time: startTime,
-                    doctor_id: selectedDoctorId
+                    doctor_id: selectedDoctorId,
+                    appointment_date: appointmentDate
                 })
                 .eq('id', appointmentId);
 
@@ -192,10 +195,13 @@ const AppointmentDetailsModal: React.FC<AppointmentDetailsModalProps> = ({ isOpe
                                 <h3 className="text-xs font-bold text-blue-600 uppercase mb-3">Informações do Agendamento</h3>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label className="text-xs text-slate-500 font-medium">Data</label>
-                                        <p className="font-semibold text-slate-900">
-                                            {appointment?.appointment_date ? new Date(appointment.appointment_date).toLocaleDateString('pt-BR') : 'N/A'}
-                                        </p>
+                                        <label className="text-xs text-slate-500 font-medium">Data (Editável)</label>
+                                        <input
+                                            type="date"
+                                            value={appointmentDate}
+                                            onChange={(e) => setAppointmentDate(e.target.value)}
+                                            className="w-full px-2 py-1 rounded border border-slate-200 font-semibold text-slate-900"
+                                        />
                                     </div>
                                     <div>
                                         <label className="text-xs text-slate-500 font-medium">Horário</label>
