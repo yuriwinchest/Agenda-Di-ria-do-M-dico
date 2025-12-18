@@ -3,8 +3,13 @@ import { Patient } from '../types';
 import PatientRegistration from './PatientRegistration';
 import { supabase } from '../lib/supabase';
 
-const PatientsView: React.FC = () => {
+interface PatientsViewProps {
+    onNavigate?: (view: any, data?: any) => void;
+}
+
+const PatientsView: React.FC<PatientsViewProps> = ({ onNavigate }) => {
     const [isRegistering, setIsRegistering] = useState(false);
+    const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
     const [patients, setPatients] = useState<Patient[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -41,11 +46,15 @@ const PatientsView: React.FC = () => {
         );
     });
 
-    if (isRegistering) {
-        return <PatientRegistration onBack={() => {
-            setIsRegistering(false);
-            fetchPatients();
-        }} />;
+    if (isRegistering || editingPatient) {
+        return <PatientRegistration
+            initialData={editingPatient}
+            onBack={() => {
+                setIsRegistering(false);
+                setEditingPatient(null);
+                fetchPatients();
+            }}
+        />;
     }
 
     return (
@@ -143,9 +152,38 @@ const PatientsView: React.FC = () => {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <button className="p-2 hover:bg-slate-200 rounded-lg text-slate-400 hover:text-blue-600 transition-colors">
-                                                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>edit</span>
-                                            </button>
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onNavigate?.('calendar', patient);
+                                                    }}
+                                                    className="p-2 hover:bg-blue-50 rounded-lg text-slate-400 hover:text-blue-600 transition-colors"
+                                                    title="Agendar Consulta"
+                                                >
+                                                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>calendar_add_on</span>
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onNavigate?.('records', patient);
+                                                    }}
+                                                    className="p-2 hover:bg-indigo-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-colors"
+                                                    title="Ver Prontuário"
+                                                >
+                                                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>clinical_notes</span>
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setEditingPatient(patient);
+                                                    }}
+                                                    className="p-2 hover:bg-slate-200 rounded-lg text-slate-400 hover:text-slate-900 transition-colors"
+                                                    title="Editar Cadastro"
+                                                >
+                                                    <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>edit</span>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

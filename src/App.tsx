@@ -13,17 +13,24 @@ import { ViewType } from './types';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewType>('teleconsultation');
+  const [initialViewData, setInitialViewData] = useState<any>(null);
+
+  const handleNavigateWithData = (view: ViewType, data?: any) => {
+    setInitialViewData(data);
+    setCurrentView(view);
+    setIsSidebarCollapsed(true);
+  };
 
   const renderView = () => {
     switch (currentView) {
       case 'dashboard':
         return <DashboardView />;
       case 'patients':
-        return <PatientsView />;
+        return <PatientsView onNavigate={handleNavigateWithData} />;
       case 'records':
-        return <MedicalRecordsView />;
+        return <MedicalRecordsView initialPatient={initialViewData} />;
       case 'calendar':
-        return <CalendarView />;
+        return <CalendarView initialPatient={initialViewData} />;
       case 'teleconsultation':
         return <TeleconsultationView />;
       case 'finance':
@@ -41,6 +48,7 @@ const App: React.FC = () => {
 
   // Auto-collapse on mobile/tablet or when navigating (optional UX choice, implementing based on request)
   const handleNavigate = (view: ViewType) => {
+    setInitialViewData(null);
     setCurrentView(view);
     setIsSidebarCollapsed(true); // "menu lateral se recolha quando uma aba seja aberta"
   };

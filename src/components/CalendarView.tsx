@@ -2,7 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import SchedulerModal from './scheduling/SchedulerModal';
 import AppointmentDetailsModal from './scheduling/AppointmentDetailsModal';
+
 import { cn } from '../lib/utils';
+import { DndContext, DragEndEvent, useSensor, useSensors, MouseSensor, TouchSensor } from '@dnd-kit/core';
+import { DraggableAppointment } from './DraggableAppointment';
+import { DayColumn } from './DayColumn';
 
 interface Appointment {
     id: string;
@@ -14,12 +18,22 @@ interface Appointment {
     status: string;
     type: string;
     observations?: string;
-    patient?: { name: string };
+    patient?: { name: string; phone?: string };
     doctor?: { name: string };
 }
 
-const CalendarView: React.FC = () => {
+interface CalendarViewProps {
+    initialPatient?: any;
+}
+
+const CalendarView: React.FC<CalendarViewProps> = ({ initialPatient }) => {
     const [isSchedulerOpen, setIsSchedulerOpen] = useState(false);
+
+    useEffect(() => {
+        if (initialPatient) {
+            setIsSchedulerOpen(true);
+        }
+    }, [initialPatient]);
     const [selectedAppointmentId, setSelectedAppointmentId] = useState<string | null>(null);
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [loading, setLoading] = useState(true);
@@ -30,6 +44,17 @@ const CalendarView: React.FC = () => {
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
     const [schedulingDate, setSchedulingDate] = useState<Date>(new Date());
+    const [doctors, setDoctors] = useState<any[]>([]);
+    const [selectedDoctorId, setSelectedDoctorId] = useState<string>('all');
+
+    useEffect(() => {
+        fetchDoctors();
+    }, []);
+
+    const fetchDoctors = async () => {
+        const { data } = await supabase.from('doctors').select('id, name');
+        if (data) setDoctors(data);
+    };
 
     const days = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
     const hours = Array.from({ length: 11 }, (_, i) => i + 8); // 8:00 to 18:00
@@ -84,7 +109,7 @@ const CalendarView: React.FC = () => {
                 .from('appointments')
                 .select(`
                     *,
-                    patient:patients(name),
+                    patient:patients(name, phone),
                     doctor:doctors(name)
                 `)
                 .gte('appointment_date', formatDate(startDate))
@@ -140,8 +165,15 @@ const CalendarView: React.FC = () => {
     };
 
     const getAppointmentsForDay = (date: Date) => {
-        const dateStr = date.toISOString().split('T')[0];
-        return appointments.filter(apt => apt.appointment_date === dateStr);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
+
+        return appointments.filter(apt =>
+            apt.appointment_date === dateStr &&
+            (selectedDoctorId === 'all' || apt.doctor_id === selectedDoctorId)
+        );
     };
 
     const PIXELS_PER_MINUTE = 96 / 60; // 96px (h-24) per hour
@@ -206,11 +238,21 @@ const CalendarView: React.FC = () => {
     };
 
     const getFilteredAppointments = () => {
-        if (viewMode === 'day' && selectedDay) {
-            const dateStr = formatDateLocal(selectedDay);
-            return appointments.filter(apt => apt.appointment_date === dateStr);
+        let filtered = appointments;
+
+        if (selectedDoctorId !== 'all') {
+            filtered = filtered.filter(apt => apt.doctor_id === selectedDoctorId);
         }
-        return appointments;
+
+        if (viewMode === 'day' && selectedDay) {
+            const year = selectedDay.getFullYear();
+            const month = String(selectedDay.getMonth() + 1).padStart(2, '0');
+            const day = String(selectedDay.getDate()).padStart(2, '0');
+            const dateStr = `${year}-${month}-${day}`;
+
+            return filtered.filter(apt => apt.appointment_date === dateStr);
+        }
+        return filtered;
     };
 
     const getVisibleDates = () => {
@@ -235,6 +277,52 @@ const CalendarView: React.FC = () => {
         setSelectedDay(newDate);
     };
 
+    const sensors = useSensors(
+        useSensor(MouseSensor, { activationConstraint: { distance: 10 } }),
+        useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
+    );
+
+    const handleDragEnd = async (event: DragEndEvent) => {
+        const { active, over, delta } = event;
+        if (!over) return;
+
+        const newDateStr = over.id as string;
+        const aptData = active.data.current as any;
+
+        if (!aptData) return;
+
+        const originalY = calculatePosition(aptData.originalTime);
+        const newY = originalY + delta.y;
+
+        // Calculate new time: start 8:00 (480 min)
+        let totalMinutes = (newY / PIXELS_PER_MINUTE) + (8 * 60);
+        totalMinutes = Math.round(totalMinutes / 15) * 15;
+
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+
+        if (hours < 8 || hours >= 19) return; // Allow up to 19:00 end
+
+        const newTimeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
+
+        if (newDateStr === aptData.originalDate && newTimeStr === aptData.originalTime) return;
+
+        setLoading(true);
+        const { error } = await supabase
+            .from('appointments')
+            .update({
+                appointment_date: newDateStr,
+                start_time: newTimeStr
+            })
+            .eq('id', active.id);
+
+        if (error) {
+            console.error('Move error:', error);
+            alert('Não foi possível mover o agendamento.');
+        }
+        loadAppointments();
+    };
+
     return (
         <div className="flex flex-col gap-3 h-full relative">
             <SchedulerModal
@@ -244,16 +332,8 @@ const CalendarView: React.FC = () => {
                     loadAppointments();
                 }}
                 initialDate={schedulingDate}
+                initialPatient={initialPatient}
             />
-
-            {selectedAppointmentId && (
-                <AppointmentDetailsModal
-                    isOpen={!!selectedAppointmentId}
-                    onClose={() => setSelectedAppointmentId(null)}
-                    appointmentId={selectedAppointmentId}
-                    onUpdate={loadAppointments}
-                />
-            )}
 
             {/* Compact Header - Single Row */}
             <div className="flex items-center justify-between gap-4 shrink-0">
@@ -355,6 +435,22 @@ const CalendarView: React.FC = () => {
                     </div>
 
                     <div className="h-8 w-px bg-slate-200"></div>
+
+                    {/* Doctor Filter */}
+                    <div className="hidden md:flex bg-white border border-slate-200 rounded-lg p-0.5 mr-3">
+                        <select
+                            value={selectedDoctorId}
+                            onChange={(e) => setSelectedDoctorId(e.target.value)}
+                            className="bg-transparent text-sm font-medium text-slate-600 outline-none px-3 py-1.5 rounded cursor-pointer hover:bg-slate-50 border-none w-48"
+                        >
+                            <option value="all">Todas as Agendas</option>
+                            {doctors.map(doc => (
+                                <option key={doc.id} value={doc.id}>{doc.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="h-8 w-px bg-slate-200 mr-4"></div>
 
                     {/* Display Mode Toggle */}
                     <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1">
@@ -486,113 +582,92 @@ const CalendarView: React.FC = () => {
                         </div>
                     ) : (
                         /* Grid View */
-                        <div className="grid grid-cols-8">
-                            {/* Time Column */}
-                            <div className="w-20 border-r border-slate-200 bg-slate-50/30">
-                                {hours.map(hour => (
-                                    <div key={hour} className="h-24 border-b border-slate-100 flex items-start justify-center p-2">
-                                        <span className="text-xs text-slate-400 font-medium">{hour}:00</span>
-                                    </div>
-                                ))}
-                            </div>
+                        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+                            <div className="grid grid-cols-8 min-h-[960px]">
+                                {/* Time Column */}
+                                <div className="w-20 border-r border-slate-200 bg-slate-50/30 font-medium">
+                                    {hours.map(hour => (
+                                        <div key={hour} className="h-24 border-b border-slate-100 flex items-start justify-center p-2 relative">
+                                            <span className="text-xs text-slate-400">{hour}:00</span>
+                                            <div className="absolute top-1/2 left-0 w-full border-t border-slate-100 border-dashed pointer-events-none opacity-50"></div>
+                                        </div>
+                                    ))}
+                                </div>
 
-                            {/* Days Columns */}
-                            {getVisibleDates().map((date, colIndex) => {
-                                const dayAppointments = getAppointmentsForDay(date);
-                                const isToday = date.toDateString() === new Date().toDateString();
+                                {/* Days Columns */}
+                                {getVisibleDates().map((date, colIndex) => {
+                                    const dayAppointments = getAppointmentsForDay(date);
+                                    const isToday = date.toDateString() === new Date().toDateString();
+                                    const dateStr = formatDateLocal(date);
 
-                                return (
-                                    <div
-                                        key={colIndex}
-                                        className={cn(
-                                            "border-r border-slate-100 last:border-r-0 relative",
-                                            isToday && 'bg-blue-50/10',
-                                            getVisibleDates().length === 1 && "col-span-7"
-                                        )}
-                                    >
-                                        {/* Grid Lines */}
-                                        {hours.map(hour => (
-                                            <div
-                                                key={hour}
-                                                onClick={() => {
-                                                    setSchedulingDate(date);
-                                                    setIsSchedulerOpen(true);
-                                                }}
-                                                className="h-24 border-b border-slate-100 hover:bg-blue-50/50 transition-colors cursor-pointer group"
-                                                title="Clique para agendar"
-                                            >
-                                                <div className="hidden group-hover:flex w-full h-full items-center justify-center">
-                                                    <span className="material-symbols-outlined text-blue-300">add</span>
-                                                </div>
-                                            </div>
-                                        ))}
-
-                                        {/* Current Time Line */}
-                                        {isToday && (
-                                            <div
-                                                className="absolute left-0 right-0 z-20 flex items-center pointer-events-none"
-                                                style={{ top: `${calculatePosition(currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }))}px` }}
-                                            >
-                                                <div className="h-2 w-2 rounded-full bg-red-500 -ml-1 shadow-sm"></div>
-                                                <div className="h-[2px] bg-red-500 w-full shadow-sm"></div>
-                                            </div>
-                                        )}
-
-                                        {/* Real Appointments */}
-                                        {dayAppointments.map(apt => {
-                                            const colors = getAppointmentColor(apt.type);
-                                            const topPosition = calculatePosition(apt.start_time);
-                                            const height = calculateDurationHeight(apt.start_time, apt.end_time);
-
-                                            return (
+                                    return (
+                                        <DayColumn
+                                            key={colIndex}
+                                            id={dateStr}
+                                            className={cn(
+                                                "border-r border-slate-100 last:border-r-0 relative min-h-full",
+                                                isToday && 'bg-blue-50/10',
+                                                getVisibleDates().length === 1 && "col-span-7"
+                                            )}
+                                            onClick={() => {
+                                                setSchedulingDate(date);
+                                                setIsSchedulerOpen(true);
+                                            }}
+                                        >
+                                            {/* Grid Lines */}
+                                            {hours.map(hour => (
                                                 <div
-                                                    key={apt.id}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setSelectedAppointmentId(apt.id);
-                                                    }}
-                                                    className={cn(
-                                                        "absolute left-1 right-1 rounded p-2 hover:shadow-lg transition-all cursor-pointer z-10 border-l-4 overflow-hidden",
-                                                        colors.bg,
-                                                        colors.border
-                                                    )}
-                                                    style={{
-                                                        top: `${topPosition}px`,
-                                                        height: `${height}px`,
-                                                        minHeight: '30px'
-                                                    }}
+                                                    key={hour}
+                                                    className="h-24 border-b border-slate-100 hover:bg-blue-50/50 transition-colors cursor-pointer group pointer-events-none"
                                                 >
-                                                    {apt.type === 'blocked' ? (
-                                                        <div className="flex flex-col h-full justify-center items-center opacity-75">
-                                                            <div className="flex items-center justify-center gap-1 mb-0.5">
-                                                                <span className="material-symbols-outlined text-[14px]">block</span>
-                                                            </div>
-                                                            <p className="text-[10px] font-bold text-center leading-none uppercase tracking-wide truncate w-full px-1">{apt.notes || 'Bloqueado'}</p>
-                                                        </div>
-                                                    ) : (
-                                                        <>
-                                                            <p className="text-xs font-bold text-slate-900 truncate leading-tight">{apt.patient?.name || 'Sem paciente'}</p>
-                                                            <div className="flex items-center gap-1 mt-0.5">
-                                                                <span className="material-symbols-outlined text-[10px] text-slate-500">schedule</span>
-                                                                <p className="text-[10px] font-medium text-slate-700">{apt.start_time.slice(0, 5)}</p>
-                                                            </div>
-                                                            {apt.doctor?.name && (
-                                                                <p className="text-[9px] text-slate-500 truncate mt-0.5 border-t border-slate-200/50 pt-0.5">
-                                                                    {apt.doctor.name}
-                                                                </p>
-                                                            )}
-                                                        </>
-                                                    )}
                                                 </div>
-                                            );
-                                        })}
-                                    </div>
-                                );
-                            })}
-                        </div>
+                                            ))}
+
+                                            {/* Current Time Line */}
+                                            {isToday && (
+                                                <div
+                                                    className="absolute left-0 right-0 z-20 flex items-center pointer-events-none"
+                                                    style={{ top: `${calculatePosition(currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }))}px` }}
+                                                >
+                                                    <div className="h-2 w-2 rounded-full bg-red-500 -ml-1 shadow-sm"></div>
+                                                    <div className="h-[2px] bg-red-500 w-full shadow-sm"></div>
+                                                </div>
+                                            )}
+
+                                            {dayAppointments.map(apt => {
+                                                const colors = getAppointmentColor(apt.type);
+                                                const topPosition = calculatePosition(apt.start_time);
+                                                const height = calculateDurationHeight(apt.start_time, apt.end_time);
+
+                                                return (
+                                                    <DraggableAppointment
+                                                        key={apt.id}
+                                                        appointment={apt}
+                                                        onClick={(id) => setSelectedAppointmentId(id)}
+                                                        style={{
+                                                            top: `${topPosition}px`,
+                                                            height: `${height}px`,
+                                                        }}
+                                                        getAppointmentColor={getAppointmentColor}
+                                                    />
+                                                );
+                                            })}
+                                        </DayColumn>
+                                    );
+                                })}
+                            </div>
+                        </DndContext>
                     )}
                 </div>
             </div>
+
+            <AppointmentDetailsModal
+                isOpen={!!selectedAppointmentId}
+                onClose={() => setSelectedAppointmentId(null)}
+                appointment={appointments.find(a => a.id === selectedAppointmentId)}
+                onUpdate={loadAppointments}
+            />
+
             {showDatePicker && (
                 <div className="fixed inset-0 z-40" onClick={() => setShowDatePicker(false)}></div>
             )}

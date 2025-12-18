@@ -3,21 +3,32 @@ import { supabase } from '../lib/supabase';
 
 interface PatientRegistrationProps {
     onBack: () => void;
+    initialData?: any;
 }
 
-const PatientRegistration: React.FC<PatientRegistrationProps> = ({ onBack }) => {
+// ... (previous content is matched by line number context in tool, but I can't skip lines in replacement content) ...
+// Wait, I should use separate calls or encompass the whole block.
+// I'll do two replaces. One for interface, one for title.
+
+// Interface:
+interface PatientRegistrationProps {
+    onBack: () => void;
+    initialData?: any;
+}
+
+const PatientRegistration: React.FC<PatientRegistrationProps> = ({ onBack, initialData }) => {
     const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        phone: '',
-        cpf: '',
-        birth_date: '',
-        gender: '',
-        billing_type: 'Particular', // Particular or Convênio
-        insurance_provider: '',
-        insurance_card_number: '',
-        preferred_payment_method: 'Cartão de Crédito', // Cartão, PIX, Dinheiro
-        address: ''
+        name: initialData?.name || '',
+        email: initialData?.email || '',
+        phone: initialData?.phone || '',
+        cpf: initialData?.cpf || '',
+        birth_date: initialData?.birth_date || '',
+        gender: initialData?.gender || '',
+        billing_type: initialData?.billing_type || 'Particular',
+        insurance_provider: initialData?.insurance_provider || '',
+        insurance_card_number: initialData?.insurance_card_number || '',
+        preferred_payment_method: initialData?.preferred_payment_method || 'Cartão de Crédito',
+        address: initialData?.address || ''
     });
 
     const [loading, setLoading] = useState(false);
@@ -30,14 +41,25 @@ const PatientRegistration: React.FC<PatientRegistrationProps> = ({ onBack }) => 
 
         setLoading(true);
         try {
-            const { error } = await supabase
-                .from('patients')
-                .insert([formData]);
+            if (initialData?.id) {
+                // Update
+                const { error } = await supabase
+                    .from('patients')
+                    .update(formData)
+                    .eq('id', initialData.id);
+                if (error) throw error;
+                alert('Cadastro atualizado com sucesso!');
+            } else {
+                // Insert
+                const { error } = await supabase
+                    .from('patients')
+                    .insert([formData]);
+                if (error) throw error;
+                alert('Paciente cadastrado com sucesso!');
+            }
 
-            if (error) throw error;
-
-            alert('Paciente cadastrado com sucesso!');
             onBack();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             alert('Erro ao salvar: ' + error.message);
         } finally {
@@ -50,7 +72,7 @@ const PatientRegistration: React.FC<PatientRegistrationProps> = ({ onBack }) => 
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Novo Cadastro</h2>
+                    <h2 className="text-3xl font-bold text-slate-900 tracking-tight">{initialData ? 'Editar Cadastro' : 'Novo Cadastro'}</h2>
                     <p className="mt-1 text-slate-500 font-medium text-sm">Informações pessoais e configuração de faturamento.</p>
                 </div>
                 <button
@@ -148,8 +170,8 @@ const PatientRegistration: React.FC<PatientRegistrationProps> = ({ onBack }) => 
                                         key={type}
                                         onClick={() => setFormData({ ...formData, billing_type: type })}
                                         className={`py-2.5 rounded-xl font-bold text-sm transition-all ${formData.billing_type === type
-                                                ? 'bg-white text-blue-600 shadow-sm'
-                                                : 'text-slate-500 hover:text-slate-700'
+                                            ? 'bg-white text-blue-600 shadow-sm'
+                                            : 'text-slate-500 hover:text-slate-700'
                                             }`}
                                     >
                                         {type}
@@ -196,8 +218,8 @@ const PatientRegistration: React.FC<PatientRegistrationProps> = ({ onBack }) => 
                                             key={method}
                                             onClick={() => setFormData({ ...formData, preferred_payment_method: method })}
                                             className={`p-3 rounded-xl border-2 font-bold text-xs flex items-center justify-between transition-all ${formData.preferred_payment_method === method
-                                                    ? 'border-blue-600 bg-blue-50 text-blue-600'
-                                                    : 'border-slate-50 bg-slate-50 text-slate-400 hover:border-slate-100'
+                                                ? 'border-blue-600 bg-blue-50 text-blue-600'
+                                                : 'border-slate-50 bg-slate-50 text-slate-400 hover:border-slate-100'
                                                 }`}
                                         >
                                             {method}

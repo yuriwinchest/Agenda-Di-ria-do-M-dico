@@ -21,15 +21,20 @@ interface MedicalHistoryItem {
     };
 }
 
-const MedicalRecordsView: React.FC = () => {
+interface MedicalRecordsViewProps {
+    initialPatient?: PatientRecord;
+}
+
+const MedicalRecordsView: React.FC<MedicalRecordsViewProps> = ({ initialPatient }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [patients, setPatients] = useState<PatientRecord[]>([]);
-    const [selectedPatient, setSelectedPatient] = useState<PatientRecord | null>(null);
+    const [selectedPatient, setSelectedPatient] = useState<PatientRecord | null>(initialPatient || null);
     const [loading, setLoading] = useState(false);
     const [history, setHistory] = useState<MedicalHistoryItem[]>([]);
     const [evolution, setEvolution] = useState('');
     const [isSigning, setIsSigning] = useState(false);
     const [signatureSuccess, setSignatureSuccess] = useState(false);
+
 
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {

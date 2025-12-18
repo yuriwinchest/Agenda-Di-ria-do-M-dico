@@ -12,16 +12,17 @@ interface SchedulerModalProps {
     onClose: () => void;
     initialDate?: Date;
     initialTime?: string;
+    initialPatient?: PatientData;
 }
 
 type Step = 1 | 2 | 3 | 4 | 5;
 
-const SchedulerModal: React.FC<SchedulerModalProps> = ({ isOpen, onClose, initialDate }) => {
-    const [currentStep, setCurrentStep] = useState<Step>(1);
+const SchedulerModal: React.FC<SchedulerModalProps> = ({ isOpen, onClose, initialDate, initialPatient }) => {
+    const [currentStep, setCurrentStep] = useState<Step>(initialPatient ? 2 : 1);
     const [loading, setLoading] = useState(false);
 
     // Booking Data State
-    const [selectedPatient, setSelectedPatient] = useState<PatientData | null>(null);
+    const [selectedPatient, setSelectedPatient] = useState<PatientData | null>(initialPatient || null);
     const [selectedService, setSelectedService] = useState<ServiceData | null>(null);
     const [selectedProcedure, setSelectedProcedure] = useState<ProcedureData | null>(null);
     const [selectedDate, setSelectedDate] = useState<Date>(initialDate || new Date());
@@ -120,7 +121,7 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({ isOpen, onClose, initia
                     doctor_id: selectedService.doctor.id,
                     appointment_date: formatDateLocal(selectedDate),
                     start_time: selectedSlot.time,
-                    status: 'confirmed',
+                    status: isBlocking ? 'blocked' : 'confirmed',
                     type: isBlocking ? 'blocked' : selectedProcedure.name,
                     observations: isBlocking ? selectedPatient.name : observations,
                     billing_type: billingType,

@@ -1,80 +1,124 @@
 import React from 'react';
+import {
+    ChevronLeft,
+    ChevronRight,
+    User,
+    Activity,
+    FileText,
+    MessageSquare,
+    Calendar,
+    Pin,
+    ArrowRight
+} from 'lucide-react';
+import { cn } from '../lib/utils';
 
 const RightPanel: React.FC = () => {
     return (
-        <div className="w-full lg:w-80 flex flex-col gap-6 shrink-0">
-            {/* Calendar */}
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-sm font-semibold text-slate-900">Outubro 2023</h4>
-                    <div className="flex gap-1">
-                        <button className="p-1 hover:bg-slate-100 rounded text-slate-500">
-                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>chevron_left</span>
+        <div className="flex flex-col gap-8 h-full">
+            {/* Quick Mini Calendar */}
+            <div className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-100 hover:shadow-xl hover:shadow-slate-100 transition-all duration-700">
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-4 bg-indigo-500 rounded-full" />
+                        <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest">Agenda</h4>
+                    </div>
+                    <div className="flex gap-1.5 p-1 bg-slate-50 rounded-xl">
+                        <button className="p-1 px-1.5 hover:bg-white hover:shadow-sm rounded-lg text-slate-400 transition-all duration-300">
+                            <ChevronLeft className="w-4 h-4" />
                         </button>
-                        <button className="p-1 hover:bg-slate-100 rounded text-slate-500">
-                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>chevron_right</span>
+                        <button className="p-1 px-1.5 hover:bg-white hover:shadow-sm rounded-lg text-slate-400 transition-all duration-300">
+                            <ChevronRight className="w-4 h-4" />
                         </button>
                     </div>
                 </div>
-                
-                <div className="grid grid-cols-7 text-center text-xs gap-y-2">
+
+                <div className="text-center text-xs font-bold mb-4 text-slate-400 uppercase tracking-widest">
+                    Dezembro 2024
+                </div>
+
+                <div className="grid grid-cols-7 text-center text-[10px] gap-1">
                     {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, i) => (
-                        <span key={i} className="text-slate-400 font-medium py-1">{day}</span>
+                        <span key={i} className="text-slate-300 font-black py-2">{day}</span>
                     ))}
-                    {/* Days */}
-                    {[1, 2, 3, 4, 5, 6, 7].map(d => (
-                         <button key={d} className="text-slate-400 hover:bg-slate-50 rounded-full w-8 h-8 flex items-center justify-center mx-auto">{d}</button>
-                    ))}
-                    <button className="text-slate-700 hover:bg-slate-50 rounded-full w-8 h-8 flex items-center justify-center mx-auto">22</button>
-                    <button className="text-slate-700 hover:bg-slate-50 rounded-full w-8 h-8 flex items-center justify-center mx-auto">23</button>
-                    <button className="bg-blue-600 text-white shadow-md shadow-blue-500/30 rounded-full w-8 h-8 flex items-center justify-center mx-auto font-bold">24</button>
-                    {[25, 26, 27, 28].map(d => (
-                         <button key={d} className="text-slate-700 hover:bg-slate-50 rounded-full w-8 h-8 flex items-center justify-center mx-auto">{d}</button>
-                    ))}
+                    {/* Simplified placeholder days for 18 Dec 2024 */}
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map(d => {
+                        const isToday = d === 18;
+                        const isSelected = d === 18;
+                        return (
+                            <button
+                                key={d}
+                                className={cn(
+                                    "w-8 h-8 flex items-center justify-center rounded-xl text-xs font-bold transition-all duration-300",
+                                    isToday ? "bg-blue-600 text-white shadow-lg shadow-blue-200" : "text-slate-500 hover:bg-slate-50"
+                                )}
+                            >
+                                {d}
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 
             {/* Active Patient Card */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col">
-                <div className="p-4 border-b border-slate-200 bg-blue-50/30">
-                    <h4 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        Paciente em Atendimento
-                    </h4>
+            <div className="bg-slate-900 rounded-[40px] shadow-2xl shadow-slate-200 flex flex-col overflow-hidden relative group">
+                {/* Decorative Elements */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full -mr-16 -mt-16 blur-3xl" />
+
+                <div className="p-6 pb-2 relative z-10">
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/5 flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            <span className="text-[10px] font-black text-white uppercase tracking-widest italic">Em Consulta</span>
+                        </div>
+                        <button className="text-white/40 hover:text-white transition-colors">
+                            <Pin className="w-4 h-4" />
+                        </button>
+                    </div>
+
+                    <div className="flex flex-col items-center text-center">
+                        <div className="relative mb-4 group-hover:scale-110 transition-transform duration-500">
+                            <div className="w-24 h-24 rounded-[36px] bg-gradient-to-tr from-blue-600 to-indigo-500 p-1">
+                                <img
+                                    src="https://randomuser.me/api/portraits/men/32.jpg"
+                                    alt="Patient"
+                                    className="w-full h-full rounded-[34px] object-cover border-4 border-slate-900"
+                                />
+                            </div>
+                            <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-emerald-500 rounded-2xl border-4 border-slate-900 flex items-center justify-center">
+                                <Activity className="w-4 h-4 text-white" />
+                            </div>
+                        </div>
+
+                        <h4 className="text-xl font-black text-white tracking-tight">João Santos</h4>
+                        <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mt-1">ID: #48293 • 32 ANOS</p>
+                    </div>
                 </div>
-                <div className="p-4 flex flex-col gap-4">
-                    <div className="flex items-center gap-3">
-                        <div 
-                            className="w-10 h-10 rounded-full bg-cover bg-center bg-no-repeat"
-                            style={{ backgroundImage: `url("https://lh3.googleusercontent.com/aida-public/AB6AXuC7G-hRL39WRWnI33S4Zn09L3MHaaz6KSooWz7Al5xf0YcKw_zIkcKgku3TThf1KUrOCIkidaGT0SePsuLJIihZ0J7mI8MFzy3IZlqlW_ykKH3KL2QZQeex86AXBA834AletACWTwCdzx0MtBK_NgDSGgz9ZdfWp0CVPVvbCn9V3zxysmf90pVszzhB3UbnvXVaqZCvCkjRJoQmJ1toAQyzUFr3SEjnOAvm1kYmo63_kTjEzTBIfiDUVruGDC38PdR22HV3FyCPs18I")` }}
-                        ></div>
-                        <div>
-                            <p className="font-semibold text-sm text-slate-900">João Santos</p>
-                            <p className="text-xs text-slate-500">32 anos • Masculino</p>
+
+                <div className="p-6 flex flex-col gap-6 relative z-10">
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-white/5 backdrop-blur-lg p-3 rounded-2xl border border-white/5">
+                            <span className="text-white/30 text-[9px] font-black uppercase block mb-1">Altura</span>
+                            <span className="text-white font-bold tracking-tight">1.82 m</span>
                         </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div className="bg-slate-50 p-2 rounded border border-slate-100">
-                            <span className="text-slate-400 block mb-0.5">Peso</span>
-                            <span className="font-semibold text-slate-700">78kg</span>
-                        </div>
-                        <div className="bg-slate-50 p-2 rounded border border-slate-100">
-                            <span className="text-slate-400 block mb-0.5">Altura</span>
-                            <span className="font-semibold text-slate-700">1.82m</span>
+                        <div className="bg-white/5 backdrop-blur-lg p-3 rounded-2xl border border-white/5">
+                            <span className="text-white/30 text-[9px] font-black uppercase block mb-1">Peso</span>
+                            <span className="text-white font-bold tracking-tight">78 kg</span>
                         </div>
                     </div>
 
-                    <div className="flex flex-col gap-2">
-                        <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Anotações Rápidas</p>
-                        <textarea 
-                            className="w-full bg-slate-50 border-none rounded-lg text-sm p-3 h-24 resize-none focus:ring-2 focus:ring-blue-500/50 text-slate-700 placeholder:text-slate-400" 
-                            placeholder="Digite observações aqui..."
-                        ></textarea>
+                    <div className="bg-white/5 p-4 rounded-3xl border border-white/5 flex flex-col gap-3">
+                        <div className="flex items-center gap-2">
+                            <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
+                            <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">Observações Rápidas</p>
+                        </div>
+                        <p className="text-xs text-white/70 leading-relaxed font-medium italic">
+                            "Alergia a Dipirona. Paciente relata dores intensas na região lombar há 3 dias."
+                        </p>
                     </div>
 
-                    <button className="w-full py-2 bg-slate-100 text-slate-600 text-xs font-semibold rounded-lg hover:bg-slate-200 transition-colors">
-                        Ver Prontuário Completo
+                    <button className="w-full h-14 bg-white text-slate-900 rounded-[22px] font-black text-xs uppercase tracking-widest hover:bg-blue-50 transition-all active:scale-[0.98] shadow-lg flex items-center justify-center gap-3 group/btn">
+                        Ver Prontuário
+                        <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
                     </button>
                 </div>
             </div>

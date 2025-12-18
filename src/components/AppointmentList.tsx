@@ -1,32 +1,50 @@
 import React, { useState, useEffect } from 'react';
 import { Appointment } from '../types';
 import { supabase } from '../lib/supabase';
+import {
+    Clock,
+    CheckCircle2,
+    AlertCircle,
+    CalendarCheck,
+    User,
+    MoreHorizontal,
+    RefreshCw,
+    Search,
+    ChevronRight,
+    Play
+} from 'lucide-react';
+import { cn } from '../lib/utils';
 
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
     switch (status) {
         case 'completed':
             return (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-600 border border-indigo-100">
-                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
-                    Concluído
-                </span>
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-100 shadow-sm animate-in zoom-in-95">
+                    <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={3} />
+                    <span className="text-[10px] font-black uppercase tracking-wider">Finalizado</span>
+                </div>
             );
         case 'confirmed':
             return (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-600 border border-amber-100">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                    Confirmado
-                </span>
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 rounded-full border border-amber-100 shadow-sm animate-in zoom-in-95">
+                    <CalendarCheck className="w-3.5 h-3.5" strokeWidth={3} />
+                    <span className="text-[10px] font-black uppercase tracking-wider">Confirmado</span>
+                </div>
             );
-        case 'scheduled':
+        case 'in_progress':
             return (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200">
-                    <span className="material-symbols-outlined text-[14px]">schedule</span>
-                    Agendado
-                </span>
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-100 shadow-sm animate-pulse">
+                    <Play className="w-3.5 h-3.5 fill-current" strokeWidth={3} />
+                    <span className="text-[10px] font-black uppercase tracking-wider">Em Atendimento</span>
+                </div>
             );
         default:
-            return null;
+            return (
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 text-slate-500 rounded-full border border-slate-100 shadow-sm animate-in zoom-in-95">
+                    <Clock className="w-3.5 h-3.5" strokeWidth={3} />
+                    <span className="text-[10px] font-black uppercase tracking-wider">Agendado</span>
+                </div>
+            );
     }
 };
 
@@ -67,7 +85,7 @@ const AppointmentList: React.FC = () => {
                     name: item.patients?.name || '---',
                     type: `${item.type} • ${item.patients?.insurance_provider || 'Particular'}`,
                     insurance: item.patients?.insurance_provider || 'Particular',
-                    avatarUrl: '' // No avatar in DB yet
+                    avatarUrl: ''
                 }
             }));
             setAppointments(mapped);
@@ -76,63 +94,110 @@ const AppointmentList: React.FC = () => {
     };
 
     return (
-        <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden min-h-[600px]">
-            <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
-                <h3 className="font-bold text-slate-800">Pacientes Agendados</h3>
-                <button onClick={fetchAppointments} className="text-sm text-blue-600 font-medium hover:underline flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[16px]">refresh</span>
-                    Atualizar
+        <div className="flex-1 bg-white rounded-[32px] shadow-sm border border-slate-100 flex flex-col overflow-hidden min-h-[600px] hover:shadow-xl hover:shadow-slate-100 transition-all duration-700">
+            <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-white relative z-10">
+                <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-6 bg-blue-600 rounded-full" />
+                    <h3 className="font-black text-slate-800 tracking-tight text-lg">Próximos Atendimentos</h3>
+                </div>
+                <button
+                    onClick={fetchAppointments}
+                    className="p-2.5 text-slate-400 hover:text-blue-600 rounded-2xl hover:bg-slate-50 transition-all active:rotate-180 duration-500 group"
+                >
+                    <RefreshCw className="w-5 h-5 group-active:scale-95" />
                 </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
                 {loading ? (
-                    <div className="flex items-center justify-center h-64">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <div className="flex flex-col items-center justify-center h-80 gap-4">
+                        <div className="relative">
+                            <RefreshCw className="w-10 h-10 text-blue-100 animate-spin" strokeWidth={1.5} />
+                            <Clock className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-blue-600" />
+                        </div>
+                        <p className="text-sm font-bold text-slate-400 tracking-widest uppercase animate-pulse">Sincronizando...</p>
                     </div>
                 ) : appointments.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-64 text-slate-400">
-                        <span className="material-symbols-outlined text-4xl mb-2">event_busy</span>
-                        Nenhum agendamento para hoje.
-                    </div>
-                ) : appointments.map((appointment) => {
-                    const isSpecial = appointment.status === 'in_progress';
-
-                    return (
-                        <div
-                            key={appointment.id}
-                            className={`flex border-b border-slate-100 ${isSpecial ? 'bg-blue-50/40 relative' : 'hover:bg-slate-50 transition-colors group'}`}
-                        >
-                            {isSpecial && <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>}
-
-                            <div className={`w-20 p-4 flex flex-col items-center justify-center border-r border-slate-100 ${isSpecial ? 'text-slate-900 font-bold' : 'text-slate-400'}`}>
-                                <span className={isSpecial ? 'text-base' : 'text-sm font-medium'}>{appointment.time}</span>
-                            </div>
-
-                            <div className="flex-1 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                <div className="flex items-start gap-4">
-                                    <div className="relative">
-                                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                                            {appointment.patient?.name.charAt(0)}
-                                        </div>
-                                        <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${isSpecial ? 'bg-emerald-500 animate-pulse' : appointment.status === 'completed' ? 'bg-green-500' : appointment.status === 'confirmed' ? 'bg-amber-500' : 'bg-slate-300'} rounded-full border-2 border-white`}></div>
-                                    </div>
-                                    <div className={isSpecial ? 'flex flex-col justify-center h-12' : ''}>
-                                        <h4 className={`text-slate-900 ${isSpecial ? 'font-bold text-base' : 'font-semibold text-sm'}`}>{appointment.patient?.name}</h4>
-                                        <p className="text-slate-500 text-xs">{appointment.patient?.type}</p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-3">
-                                    <StatusBadge status={appointment.status} />
-                                    <button className="p-1.5 text-slate-400 hover:text-slate-600 rounded hover:bg-slate-100 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>more_vert</span>
-                                    </button>
-                                </div>
-                            </div>
+                    <div className="flex flex-col items-center justify-center h-80 text-slate-400">
+                        <div className="w-20 h-20 bg-slate-50 rounded-[40px] flex items-center justify-center mb-4">
+                            <AlertCircle className="w-10 h-10 text-slate-200" strokeWidth={1} />
                         </div>
-                    );
-                })}
+                        <p className="font-black text-slate-400 uppercase tracking-widest text-xs">Sem agendamentos para hoje</p>
+                    </div>
+                ) : (
+                    <div className="divide-y divide-slate-50">
+                        {appointments.map((appointment) => {
+                            const isSpecial = appointment.status === 'in_progress';
+
+                            return (
+                                <div
+                                    key={appointment.id}
+                                    className={cn(
+                                        "flex group transition-all duration-500 cursor-pointer relative",
+                                        isSpecial ? "bg-emerald-50/20" : "hover:bg-slate-50/50"
+                                    )}
+                                >
+                                    {/* Time Block */}
+                                    <div className={cn(
+                                        "w-24 px-4 py-8 flex flex-col items-center justify-center border-r border-slate-50 transition-all duration-500",
+                                        isSpecial ? "bg-emerald-500 text-white" : "text-slate-400 group-hover:bg-white"
+                                    )}>
+                                        <Clock className={cn("w-4 h-4 mb-1.5", isSpecial ? "text-white" : "text-slate-300")} />
+                                        <span className="text-sm font-black tracking-tighter leading-none">{appointment.time}</span>
+                                    </div>
+
+                                    {/* Patient Info */}
+                                    <div className="flex-1 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                                        <div className="flex items-center gap-5">
+                                            <div className="relative shrink-0">
+                                                <div className={cn(
+                                                    "w-14 h-14 rounded-[22px] flex items-center justify-center font-black text-lg shadow-sm transition-all duration-500 group-hover:scale-105",
+                                                    isSpecial ? "bg-white text-emerald-600 shadow-emerald-200/50" : "bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-600"
+                                                )}>
+                                                    {appointment.patient?.name.charAt(0)}
+                                                </div>
+                                                <div className={cn(
+                                                    "absolute -bottom-1 -right-1 w-5 h-5 rounded-lg border-4 border-white shadow-sm flex items-center justify-center",
+                                                    isSpecial ? "bg-emerald-500 animate-pulse" :
+                                                        appointment.status === 'completed' ? "bg-indigo-500" :
+                                                            appointment.status === 'confirmed' ? "bg-amber-500" : "bg-slate-300"
+                                                )}>
+                                                    {isSpecial && <Play className="w-2.5 h-2.5 text-white fill-current" />}
+                                                </div>
+                                            </div>
+                                            <div className="min-w-0">
+                                                <h4 className={cn(
+                                                    "text-slate-800 truncate transition-all duration-300",
+                                                    isSpecial ? "font-black text-lg tracking-tight" : "font-bold text-base tracking-tight"
+                                                )}>
+                                                    {appointment.patient?.name}
+                                                </h4>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{appointment.patient?.type}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-4">
+                                            <StatusBadge status={appointment.status} />
+                                            <button className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50/50 text-slate-300 hover:bg-slate-900 hover:text-white transition-all duration-300 group/btn">
+                                                <ChevronRight className="w-5 h-5 group-hover/btn:translate-x-0.5 transition-transform" />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Active Indicator Line */}
+                                    {isSpecial && <div className="absolute right-0 top-0 bottom-0 w-1 bg-emerald-500" />}
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+
+            {/* List Footer */}
+            <div className="p-4 bg-slate-50/30 border-t border-slate-50 text-center">
+                <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Total de {appointments.length} Atendimentos</p>
             </div>
         </div>
     );
