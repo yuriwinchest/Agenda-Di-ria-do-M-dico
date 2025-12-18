@@ -133,13 +133,15 @@ const CalendarView: React.FC = () => {
     const handleDayClick = (date: Date) => {
         setSelectedDay(date);
         setViewMode('day');
-        setCurrentWeekStart(getWeekStart(date));
+        // Don't change currentWeekStart to preserve loaded appointments
     };
 
     const getFilteredAppointments = () => {
-        if (!selectedDay) return appointments;
-        const dateStr = selectedDay.toISOString().split('T')[0];
-        return appointments.filter(apt => apt.appointment_date === dateStr);
+        if (viewMode === 'day' && selectedDay) {
+            const dateStr = selectedDay.toISOString().split('T')[0];
+            return appointments.filter(apt => apt.appointment_date === dateStr);
+        }
+        return appointments;
     };
 
     return (
@@ -169,7 +171,10 @@ const CalendarView: React.FC = () => {
                     <h2 className="text-2xl font-bold text-slate-900">Agenda</h2>
                     <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1">
                         <button
-                            onClick={() => setViewMode('month')}
+                            onClick={() => {
+                                setViewMode('month');
+                                setSelectedDay(null);
+                            }}
                             className={cn(
                                 "px-3 py-1.5 text-sm font-medium rounded transition-all",
                                 viewMode === 'month' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'
@@ -178,7 +183,10 @@ const CalendarView: React.FC = () => {
                             Mês
                         </button>
                         <button
-                            onClick={() => setViewMode('week')}
+                            onClick={() => {
+                                setViewMode('week');
+                                setSelectedDay(null);
+                            }}
                             className={cn(
                                 "px-3 py-1.5 text-sm font-medium rounded transition-all",
                                 viewMode === 'week' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'
