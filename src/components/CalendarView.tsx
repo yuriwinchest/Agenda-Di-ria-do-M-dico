@@ -28,6 +28,7 @@ const CalendarView: React.FC = () => {
     const [selectedDay, setSelectedDay] = useState<Date | null>(new Date()); // Start with today
     const [displayMode, setDisplayMode] = useState<'grid' | 'list'>('grid');
     const [showDatePicker, setShowDatePicker] = useState(false);
+    const [currentTime, setCurrentTime] = useState(new Date());
     const [schedulingDate, setSchedulingDate] = useState<Date>(new Date());
 
     const days = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
@@ -100,6 +101,19 @@ const CalendarView: React.FC = () => {
             setLoading(false);
         }
     };
+
+    // Initial fetch
+    useEffect(() => {
+        loadAppointments();
+    }, [selectedDay, viewMode]);
+
+    // Timer for Current Time Line
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 60000); // Update every minute
+        return () => clearInterval(timer);
+    }, []);
 
     const handlePreviousWeek = () => {
         const newStart = new Date(currentWeekStart);
@@ -511,6 +525,17 @@ const CalendarView: React.FC = () => {
                                                 </div>
                                             </div>
                                         ))}
+
+                                        {/* Current Time Line */}
+                                        {isToday && (
+                                            <div
+                                                className="absolute left-0 right-0 z-20 flex items-center pointer-events-none"
+                                                style={{ top: `${calculatePosition(currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }))}px` }}
+                                            >
+                                                <div className="h-2 w-2 rounded-full bg-red-500 -ml-1 shadow-sm"></div>
+                                                <div className="h-[2px] bg-red-500 w-full shadow-sm"></div>
+                                            </div>
+                                        )}
 
                                         {/* Real Appointments */}
                                         {dayAppointments.map(apt => {
