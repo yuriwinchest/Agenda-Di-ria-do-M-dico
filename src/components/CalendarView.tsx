@@ -129,7 +129,7 @@ const CalendarView: React.FC = () => {
     };
 
     return (
-        <div className="flex flex-col gap-6 h-full relative">
+        <div className="flex flex-col gap-3 h-full relative">
             <SchedulerModal
                 isOpen={isSchedulerOpen}
                 onClose={() => {
@@ -148,15 +148,17 @@ const CalendarView: React.FC = () => {
                 />
             )}
 
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 shrink-0">
+            {/* Compact Header - Single Row */}
+            <div className="flex items-center justify-between gap-4 shrink-0">
+                {/* Left: Title + View Filters */}
                 <div className="flex items-center gap-4">
-                    <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Agenda</h2>
+                    <h2 className="text-2xl font-bold text-slate-900">Agenda</h2>
                     <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1">
                         <button
                             onClick={() => setViewMode('month')}
                             className={cn(
-                                "px-3 py-1 text-sm font-medium rounded transition-all",
-                                viewMode === 'month' ? 'bg-blue-50 text-blue-700 shadow-sm' : 'text-slate-600 hover:bg-slate-50'
+                                "px-3 py-1.5 text-sm font-medium rounded transition-all",
+                                viewMode === 'month' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'
                             )}
                         >
                             Mês
@@ -164,8 +166,8 @@ const CalendarView: React.FC = () => {
                         <button
                             onClick={() => setViewMode('week')}
                             className={cn(
-                                "px-3 py-1 text-sm font-medium rounded transition-all",
-                                viewMode === 'week' ? 'bg-blue-50 text-blue-700 shadow-sm' : 'text-slate-600 hover:bg-slate-50'
+                                "px-3 py-1.5 text-sm font-medium rounded transition-all",
+                                viewMode === 'week' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'
                             )}
                         >
                             Semana
@@ -173,15 +175,29 @@ const CalendarView: React.FC = () => {
                         <button
                             onClick={() => setViewMode('day')}
                             className={cn(
-                                "px-3 py-1 text-sm font-medium rounded transition-all",
-                                viewMode === 'day' ? 'bg-blue-50 text-blue-700 shadow-sm' : 'text-slate-600 hover:bg-slate-50'
+                                "px-3 py-1.5 text-sm font-medium rounded transition-all",
+                                viewMode === 'day' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'
                             )}
                         >
                             Dia
                         </button>
                     </div>
                 </div>
+
+                {/* Right: Navigation + New Appointment */}
                 <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                        <button onClick={handlePreviousWeek} className="p-2 hover:bg-slate-100 rounded-lg text-slate-600 transition-colors">
+                            <span className="material-symbols-outlined">chevron_left</span>
+                        </button>
+                        <span className="text-sm font-semibold text-slate-800 min-w-[200px] text-center capitalize">{formatWeekRange()}</span>
+                        <button onClick={handleNextWeek} className="p-2 hover:bg-slate-100 rounded-lg text-slate-600 transition-colors">
+                            <span className="material-symbols-outlined">chevron_right</span>
+                        </button>
+                    </div>
+
+                    <div className="h-8 w-px bg-slate-200"></div>
+
                     <button
                         onClick={() => setIsSchedulerOpen(true)}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2"
@@ -189,18 +205,6 @@ const CalendarView: React.FC = () => {
                         <span className="material-symbols-outlined text-[20px]">add</span>
                         Novo Agendamento
                     </button>
-
-                    <div className="h-8 w-px bg-slate-200 mx-2 hidden sm:block"></div>
-
-                    <div className="flex items-center gap-2">
-                        <button onClick={handlePreviousWeek} className="p-2 hover:bg-white rounded-full text-slate-500 hover:shadow-sm border border-transparent hover:border-slate-200 transition-all">
-                            <span className="material-symbols-outlined">chevron_left</span>
-                        </button>
-                        <span className="text-lg font-semibold text-slate-800 w-48 text-center capitalize">{formatWeekRange()}</span>
-                        <button onClick={handleNextWeek} className="p-2 hover:bg-white rounded-full text-slate-500 hover:shadow-sm border border-transparent hover:border-slate-200 transition-all">
-                            <span className="material-symbols-outlined">chevron_right</span>
-                        </button>
-                    </div>
                 </div>
             </div>
 
