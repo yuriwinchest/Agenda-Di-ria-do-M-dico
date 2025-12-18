@@ -145,7 +145,8 @@ insert into public.procedures (code, name, category, base_price) values
 ('40101010', 'ECG CONVENCIONAL DE ATÉ 12 DERIVAÇÕES', 'Exames', 45.00),
 ('40301000', 'HEMOGRAMA COMPLETO', 'Exames', 25.00),
 ('40302000', 'GLICOSE', 'Exames', 15.00),
-('40801010', 'RADIOGRAFIA DE TÓRAX - 1 POSIÇÃO', 'Exames', 60.00)
+('40801010', 'RADIOGRAFIA DE TÓRAX', 'Exames', 60.00),
+('40901010', 'ULTRASSONOGRAFIA', 'Exames', 120.00)
 on conflict (code) do nothing;
 
 -- 9. Profiles (Link Auth Users to Staff Roles)

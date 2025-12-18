@@ -21,20 +21,16 @@ const ProceduresView: React.FC = () => {
 
     const fetchProcedures = async () => {
         setLoading(true);
-        // This would be a real fetch from Supabase
-        // const { data, error } = await supabase.from('procedures').select('*');
+        const { data, error } = await supabase
+            .from('procedures')
+            .select('*')
+            .order('name', { ascending: true });
 
-        // Mocking for now to match SQL
-        const mockData: Procedure[] = [
-            { id: '1', code: '10101012', name: 'CONSULTA EM CONSULTÓRIO', category: 'Consultas', base_price: 150.00, active: true },
-            { id: '2', code: '10101039', name: 'CONSULTA EM DOMICÍLIO', category: 'Consultas', base_price: 250.00, active: true },
-            { id: '3', code: '40101010', name: 'ECG CONVENCIONAL', category: 'Exames', base_price: 45.00, active: true },
-            { id: '4', code: '40301000', name: 'HEMOGRAMA COMPLETO', category: 'Exames', base_price: 25.00, active: true },
-            { id: '5', code: '40302000', name: 'GLICOSE', category: 'Exames', base_price: 15.00, active: true },
-            { id: '6', code: '40801010', name: 'RADIOGRAFIA DE TÓRAX', category: 'Exames', base_price: 60.00, active: true },
-        ];
-
-        setProcedures(mockData);
+        if (error) {
+            console.error('Error fetching procedures:', error);
+        } else {
+            setProcedures(data || []);
+        }
         setLoading(false);
     };
 
@@ -81,42 +77,48 @@ const ProceduresView: React.FC = () => {
                 </div>
 
                 <div className="flex-1 overflow-x-auto overflow-y-auto">
-                    <table className="w-full text-sm text-left">
-                        <thead className="text-xs text-slate-500 uppercase bg-slate-50/50 border-b border-slate-100">
-                            <tr>
-                                <th className="px-6 py-4 font-bold">Código TUSS</th>
-                                <th className="px-6 py-4 font-bold">Procedimento</th>
-                                <th className="px-6 py-4 font-bold">Categoria</th>
-                                <th className="px-6 py-4 font-bold text-right">Preço Base</th>
-                                <th className="px-6 py-4 font-bold text-center">Status</th>
-                                <th className="px-6 py-4 font-bold text-right">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {filteredProcedures.map((item) => (
-                                <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                                    <td className="px-6 py-4 font-mono text-blue-600 font-bold">{item.code}</td>
-                                    <td className="px-6 py-4 font-medium text-slate-900">{item.name}</td>
-                                    <td className="px-6 py-4">
-                                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600">
-                                            {item.category}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right font-bold text-slate-900">{formatCurrency(item.base_price)}</td>
-                                    <td className="px-6 py-4 text-center">
-                                        <div className="flex justify-center">
-                                            <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <button className="text-slate-400 hover:text-blue-600 transition-colors">
-                                            <span className="material-symbols-outlined text-[20px]">edit</span>
-                                        </button>
-                                    </td>
+                    {loading ? (
+                        <div className="flex items-center justify-center h-64">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        </div>
+                    ) : (
+                        <table className="w-full text-sm text-left">
+                            <thead className="text-xs text-slate-500 uppercase bg-slate-50/50 border-b border-slate-100">
+                                <tr>
+                                    <th className="px-6 py-4 font-bold">Código TUSS</th>
+                                    <th className="px-6 py-4 font-bold">Procedimento</th>
+                                    <th className="px-6 py-4 font-bold">Categoria</th>
+                                    <th className="px-6 py-4 font-bold text-right">Preço Base</th>
+                                    <th className="px-6 py-4 font-bold text-center">Status</th>
+                                    <th className="px-6 py-4 font-bold text-right">Ações</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {filteredProcedures.map((item) => (
+                                    <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                                        <td className="px-6 py-4 font-mono text-blue-600 font-bold">{item.code}</td>
+                                        <td className="px-6 py-4 font-medium text-slate-900">{item.name}</td>
+                                        <td className="px-6 py-4">
+                                            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600">
+                                                {item.category}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right font-bold text-slate-900">{formatCurrency(item.base_price)}</td>
+                                        <td className="px-6 py-4 text-center">
+                                            <div className="flex justify-center">
+                                                <span className={`w-2 h-2 rounded-full ${item.active ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-slate-300'}`}></span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <button className="text-slate-400 hover:text-blue-600 transition-colors">
+                                                <span className="material-symbols-outlined text-[20px]">edit</span>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
                 </div>
             </div>
         </div>

@@ -2,101 +2,82 @@ import React from 'react';
 import { PatientData } from './PatientSelector';
 import { ServiceData } from './ServiceSelector';
 import { TimeSlot } from './TimeSlotPicker';
+import { ProcedureData } from './ProcedureSelector';
 
 interface BookingConfirmationProps {
     data: {
         patient: PatientData | null;
         service: ServiceData | null;
+        procedure: ProcedureData | null;
         slot: TimeSlot | null;
         date: Date;
     };
     onConfirm: () => void;
     onBack?: () => void;
+    loading?: boolean;
+    observations?: string;
+    onObservationsChange?: (value: string) => void;
 }
 
-const BookingConfirmation: React.FC<BookingConfirmationProps> = ({ data, onConfirm }) => {
-    const { patient, service, slot, date } = data;
+const BookingConfirmation: React.FC<BookingConfirmationProps> = ({ data, onConfirm, loading, observations, onObservationsChange }) => {
+    const { patient, service, procedure, slot, date } = data;
 
-    if (!patient || !service || !slot) return null;
+    if (!patient || !service || !slot || !procedure) return null;
 
     return (
-        <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
-            <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
-                <h3 className="text-green-800 font-bold text-lg mb-1">Confirme os detalhes</h3>
-                <p className="text-green-600 text-sm">Verifique se as informações abaixo estão corretas antes de finalizar.</p>
+        <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="bg-green-50/50 border border-green-100 rounded-lg p-3 text-center">
+                <p className="text-green-700 text-xs font-bold">Confirme os detalhes do agendamento</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Patient Info */}
-                <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-                    <h4 className="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[16px]">person</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {/* Patient Info Compact */}
+                <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-2 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-sm">person</span>
                         Paciente
                     </h4>
-                    <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
-                            {patient.name.charAt(0)}
-                        </div>
-                        <div>
-                            <p className="font-bold text-slate-900">{patient.name}</p>
-                            <p className="text-xs text-slate-500">CPF: {patient.cpf}</p>
-                        </div>
-                    </div>
-                    <div className="space-y-1 text-sm">
-                        <p className="flex items-center gap-2 text-slate-600">
-                            <span className="material-symbols-outlined text-[16px] text-slate-400">call</span>
-                            {patient.phone}
-                        </p>
-                        {patient.email && (
-                            <p className="flex items-center gap-2 text-slate-600">
-                                <span className="material-symbols-outlined text-[16px] text-slate-400">mail</span>
-                                {patient.email}
-                            </p>
-                        )}
-                    </div>
+                    <p className="font-bold text-slate-900 text-sm">{patient.name}</p>
+                    <p className="text-[10px] text-slate-500">CPF: {patient.cpf}</p>
                 </div>
 
-                {/* Service Info */}
-                <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-                    <h4 className="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[16px]">medical_services</span>
-                        Serviço
+                {/* Service/Doc info Compact */}
+                <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                    <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-2 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-sm">medical_services</span>
+                        Médico & Horário
                     </h4>
-                    <div className="flex items-center gap-3 mb-3">
-                        <img src={service.doctor.avatar} alt={service.doctor.name} className="w-10 h-10 rounded-full object-cover" />
-                        <div>
-                            <p className="font-bold text-slate-900">{service.doctor.name}</p>
-                            <p className="text-xs text-slate-500">{service.specialty}</p>
-                        </div>
-                    </div>
-                    <div className="space-y-1 text-sm">
-                        <p className="flex items-center gap-2 text-slate-600">
-                            <span className="material-symbols-outlined text-[16px] text-slate-400">event</span>
-                            {date.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
-                        </p>
-                        <p className="flex items-center gap-2 text-slate-600">
-                            <span className="material-symbols-outlined text-[16px] text-slate-400">schedule</span>
-                            {slot.time}
-                        </p>
-                    </div>
+                    <p className="font-bold text-slate-900 text-sm">{service.doctor.name}</p>
+                    <p className="text-[10px] text-slate-500">{date.toLocaleDateString('pt-BR')} às {slot.time}</p>
                 </div>
             </div>
 
-            <div className="space-y-3">
-                <div className="flex items-start gap-3 p-3 bg-blue-50/50 rounded-lg text-sm text-blue-800">
-                    <span className="material-symbols-outlined text-[20px] mt-0.5">info</span>
-                    <p>Ao confirmar, uma notificação será enviada automaticamente para o paciente via WhatsApp e E-mail.</p>
+            {/* Procedure info Compact */}
+            <div className="bg-blue-50/50 p-3 rounded-lg border border-blue-100">
+                <h4 className="text-[10px] font-bold text-blue-400 uppercase mb-1 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">payments</span>
+                    Procedimento Selecionado
+                </h4>
+                <div className="flex justify-between items-center">
+                    <p className="font-bold text-blue-900 text-sm">{procedure.name}</p>
+                    <p className="font-bold text-blue-600 text-sm">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(procedure.base_price)}
+                    </p>
                 </div>
             </div>
 
-            <div className="mt-auto pt-6 border-t border-slate-100 flex justify-end">
-                <button
-                    onClick={onConfirm}
-                    className="w-full sm:w-auto bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition-colors shadow-lg shadow-green-200 font-bold flex items-center justify-center gap-2"
-                >
-                    <span className="material-symbols-outlined">check_circle</span>
-                    Confirmar Agendamento
-                </button>
+            {/* Observation Field - NEW */}
+            <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">notes</span>
+                    Observações da Atendente
+                </label>
+                <textarea
+                    value={observations}
+                    onChange={(e) => onObservationsChange?.(e.target.value)}
+                    placeholder="Ex: Paciente com urgência, trazer exames anteriores..."
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs outline-none focus:ring-2 focus:ring-blue-500 min-h-[80px]"
+                />
             </div>
         </div>
     );

@@ -8,7 +8,12 @@ export interface Patient {
     height?: string;
     insurance: string;
     healthPlanId?: string; // Reference to HealthPlan
+    billingType?: string;
+    preferredPaymentMethod?: string;
+    insuranceProvider?: string;
     insuranceCardNumber?: string;
+    address?: string;
+    observations?: string;
     type: string;
     email?: string;
     phone?: string;

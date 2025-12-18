@@ -1,12 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { cn } from '../../lib/utils';
+import { supabase } from '../../lib/supabase';
 
 export interface PatientData {
-    id?: string;
+    id: string;
     name: string;
     cpf: string;
     phone: string;
     email?: string;
+    billing_type?: string;
+    preferred_payment_method?: string;
+    insurance_provider?: string;
+    insurance_card_number?: string;
     isNew?: boolean;
 }
 
@@ -15,16 +20,12 @@ interface PatientSelectorProps {
     initialData?: PatientData | null;
 }
 
-const MOCK_PATIENTS: PatientData[] = [
-    { id: '1', name: 'Ana Silva', cpf: '123.456.789-00', phone: '(11) 99887-7665', email: 'ana@email.com' },
-    { id: '2', name: 'Carlos Souza', cpf: '987.654.321-99', phone: '(11) 98765-4321', email: 'carlos@email.com' },
-    { id: '3', name: 'Mariana Costa', cpf: '456.789.123-44', phone: '(21) 99999-8888', email: 'mariana@email.com' },
-];
-
 const PatientSelector: React.FC<PatientSelectorProps> = ({ onSelect, initialData }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isCreatingNew, setIsCreatingNew] = useState(false);
-    const [newPatient, setNewPatient] = useState<PatientData>({
+    const [patients, setPatients] = useState<PatientData[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [newPatient, setNewPatient] = useState<Partial<PatientData>>({
         name: '',
         cpf: '',
         phone: '',
@@ -32,18 +33,56 @@ const PatientSelector: React.FC<PatientSelectorProps> = ({ onSelect, initialData
         isNew: true
     });
 
-    const filteredPatients = MOCK_PATIENTS.filter(p =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.cpf.includes(searchTerm)
-    );
+    useEffect(() => {
+        const delayDebounceFn = setTimeout(() => {
+            if (searchTerm.length >= 3) {
+                searchPatients();
+            } else if (searchTerm.length === 0) {
+                setPatients([]);
+            }
+        }, 500);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchTerm]);
+
+    const searchPatients = async () => {
+        setLoading(true);
+        const { data, error } = await supabase
+            .from('patients')
+            .select('id, name, cpf, phone, email, billing_type, preferred_payment_method, insurance_provider, insurance_card_number')
+            .or(`name.ilike.%${searchTerm}%,cpf.ilike.%${searchTerm}%`)
+            .limit(10);
+
+        if (!error && data) {
+            setPatients(data as PatientData[]);
+        }
+        setLoading(false);
+    };
 
     const handleNewPatientChange = (field: keyof PatientData, value: string) => {
         setNewPatient(prev => ({ ...prev, [field]: value }));
     };
 
-    const handleCreateSelect = () => {
+    const handleCreateSelect = async () => {
         if (newPatient.name && newPatient.phone) {
-            onSelect({ ...newPatient, id: Math.random().toString() }); // Mock ID
+            setLoading(true);
+            const { data, error } = await supabase
+                .from('patients')
+                .insert([{
+                    name: newPatient.name,
+                    cpf: newPatient.cpf,
+                    phone: newPatient.phone,
+                    email: newPatient.email
+                }])
+                .select()
+                .single();
+
+            if (!error && data) {
+                onSelect(data as PatientData);
+            } else {
+                alert("Erro ao cadastrar: " + (error?.message || "Erro desconhecido"));
+            }
+            setLoading(false);
         }
     };
 
@@ -51,7 +90,7 @@ const PatientSelector: React.FC<PatientSelectorProps> = ({ onSelect, initialData
         return (
             <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="flex justify-between items-center mb-2">
-                    <h3 className="text-lg font-semibold text-slate-800">Novo Paciente</h3>
+                    <h3 className="text-lg font-semibold text-slate-800">Novo Paciente Rápido</h3>
                     <button
                         onClick={() => setIsCreatingNew(false)}
                         className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
@@ -105,11 +144,12 @@ const PatientSelector: React.FC<PatientSelectorProps> = ({ onSelect, initialData
 
                 <div className="mt-4 flex justify-end">
                     <button
-                        disabled={!newPatient.name || !newPatient.phone}
+                        disabled={!newPatient.name || !newPatient.phone || loading}
                         onClick={handleCreateSelect}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
                     >
-                        Confirmar e Selecionar
+                        {loading ? <span className="animate-spin material-symbols-outlined text-sm">sync</span> : null}
+                        {loading ? 'Cadastrando...' : 'Confirmar e Selecionar'}
                     </button>
                 </div>
             </div>
@@ -118,22 +158,32 @@ const PatientSelector: React.FC<PatientSelectorProps> = ({ onSelect, initialData
 
     return (
         <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-right-4 duration-300">
-            <h3 className="text-lg font-semibold text-slate-800">Buscar Paciente</h3>
+            <h3 className="text-lg font-semibold text-slate-800">Buscar Paciente Cadastrado</h3>
 
             <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400">search</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400">
+                    {loading ? 'sync' : 'search'}
+                </span>
                 <input
                     type="text"
-                    placeholder="Buscar por nome ou CPF..."
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                    placeholder="Digite pelo menos 3 caracteres do Nome ou CPF..."
+                    className={cn(
+                        "w-full bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all",
+                        loading ? "border-blue-200" : ""
+                    )}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
+                {loading && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    </div>
+                )}
             </div>
 
-            <div className="flex-1 max-h-[300px] overflow-y-auto border border-slate-100 rounded-lg">
-                {filteredPatients.length > 0 ? (
-                    filteredPatients.map(patient => (
+            <div className="flex-1 max-h-[300px] overflow-y-auto border border-slate-100 rounded-lg bg-white">
+                {patients.length > 0 ? (
+                    patients.map(patient => (
                         <div
                             key={patient.id}
                             onClick={() => onSelect(patient)}
@@ -149,10 +199,14 @@ const PatientSelector: React.FC<PatientSelectorProps> = ({ onSelect, initialData
                             <span className="material-symbols-outlined text-slate-400 group-hover:text-blue-500">chevron_right</span>
                         </div>
                     ))
-                ) : (
+                ) : searchTerm.length >= 3 && !loading ? (
                     <div className="p-8 text-center text-slate-500 flex flex-col items-center">
                         <span className="material-symbols-outlined text-4xl mb-2 text-slate-300">person_off</span>
-                        <p>Nenhum paciente encontrado.</p>
+                        <p>Nenhum paciente encontrado para "{searchTerm}".</p>
+                    </div>
+                ) : (
+                    <div className="p-8 text-center text-slate-400">
+                        <p className="text-sm">Inicie a busca para selecionar um paciente.</p>
                     </div>
                 )}
             </div>
@@ -163,7 +217,7 @@ const PatientSelector: React.FC<PatientSelectorProps> = ({ onSelect, initialData
                     className="text-blue-600 font-medium hover:bg-blue-50 px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
                 >
                     <span className="material-symbols-outlined">person_add</span>
-                    Cadastrar Novo Paciente
+                    Paciente não cadastrado? Clique aqui
                 </button>
             </div>
         </div>

@@ -1,0 +1,88 @@
+-- Comprehensive list of TUSS Procedures (Exams, Consultations, Imaging)
+-- This list expands the base procedures with common codes from DataSUS/ANS standard
+
+INSERT INTO public.procedures (code, name, category, base_price) VALUES
+-- CONSULTAS (Iniciado com 10)
+('10101012', 'CONSULTA EM CONSULTÓRIO (HORÁRIO NORMAL)', 'Consultas', 150.00),
+('10101039', 'CONSULTA EM DOMICÍLIO', 'Consultas', 250.00),
+('10101020', 'CONSULTA EM PRONTO SOCORRO', 'Consultas', 200.00),
+('10106014', 'ATENDIMENTO MÉDICO DO INTENSIVISTA EM UTI', 'Consultas', 350.00),
+
+-- EXAMES LABORATORIAIS - SANGUE (Iniciado com 403)
+('40301150', 'ÁCIDO ÚRICO - DOSAGEM', 'Laboratório', 12.00),
+('40301222', 'ALBUMINA - DOSAGEM', 'Laboratório', 15.00),
+('40301281', 'AMILASE - DOSAGEM', 'Laboratório', 18.00),
+('40316149', 'PSA TOTAL - DOSAGEM', 'Laboratório', 45.00),
+('40316130', 'PSA LIVRE - DOSAGEM', 'Laboratório', 55.00),
+('40302075', 'HEMOGLOBINA GLICADA - DOSAGEM', 'Laboratório', 35.00),
+('40316521', 'TSH - DOSAGEM', 'Laboratório', 40.00),
+('40316491', 'T4 LIVRE - DOSAGEM', 'Laboratório', 40.00),
+('40304558', 'RETICULÓCITOS - CONTAGEM', 'Laboratório', 10.00),
+('40301028', '5-NUCLEOTIDASE - DOSAGEM', 'Laboratório', 25.00),
+('40304361', 'HEMOGRAMA COMPLETO', 'Laboratório', 25.00),
+('40302040', 'GLICOSE - DOSAGEM', 'Laboratório', 10.00),
+('40302520', 'COLESTEROL TOTAL - DOSAGEM', 'Laboratório', 15.00),
+('40302555', 'HDL COLESTEROL - DOSAGEM', 'Laboratório', 18.00),
+('40302580', 'LDL COLESTEROL - DOSAGEM', 'Laboratório', 18.00),
+('40302423', 'TRIGLICERÍDEOS - DOSAGEM', 'Laboratório', 20.00),
+('40314030', 'CREATININA - DOSAGEM', 'Laboratório', 12.00),
+('40314057', 'URÉIA - DOSAGEM', 'Laboratório', 12.00),
+('40314014', 'ÁCIDO ÚRICO - DOSAGEM (URINA)', 'Laboratório', 15.00),
+
+-- EXAMES LABORATORIAIS - URINA (Iniciado com 403)
+('40311210', 'ROTINA DE URINA (EAS)', 'Laboratório', 15.00),
+('40311040', 'CÁLCULOS URINÁRIOS - ANÁLISE', 'Laboratório', 40.00),
+('40311171', 'MICROALBUMINÚRIA', 'Laboratório', 30.00),
+('40311082', 'CORPOS CETÔNICOS - PESQUISA NA URINA', 'Laboratório', 10.00),
+('40311059', 'CITOMÉTRICO (URINA)', 'Laboratório', 20.00),
+
+-- MICROBIOLOGIA / OUTROS
+('40310418', 'ANTIBIOGRAMA', 'Laboratório', 45.00),
+('40316114', 'HBSAG (ANTÍGENO AUSTRÁLIA)', 'Laboratório', 35.00),
+('40310248', 'HEMOCULTURA (POR AMOSTRA)', 'Laboratório', 60.00),
+('40312178', 'TESTE DO PEZINHO AMPLIADO', 'Laboratório', 120.00),
+
+-- EXAMES DE IMAGEM - RAIO-X (Iniciado com 408)
+('40801010', 'RADIOGRAFIA DE TÓRAX (PA E PERFIL)', 'Imagem', 60.00),
+('40808017', 'RAIO-X DE ABDOME SIMPLES', 'Imagem', 50.00),
+('40808025', 'RAIO-X DE ABDOME AGUDO', 'Imagem', 80.00),
+('40803104', 'RAIO-X DE ANTEBRAÇO', 'Imagem', 45.00),
+('40804011', 'RAIO-X DE BACIA', 'Imagem', 60.00),
+('40802019', 'RAIO-X DE COLUNA CERVICAL', 'Imagem', 70.00),
+('40802035', 'RAIO-X DE COLUNA DORSAL', 'Imagem', 75.00),
+('40801128', 'RAIO-X DE CAVUM', 'Imagem', 50.00),
+('40803074', 'RAIO-X DE OMBRO', 'Imagem', 55.00),
+('40804089', 'RAIO-X DE TORNOZELO', 'Imagem', 55.00),
+
+-- EXAMES DE IMAGEM - ULTRASSONOGRAFIA (Iniciado com 409)
+('40901017', 'USG ABDOME TOTAL', 'Imagem', 150.00),
+('40901025', 'USG ABDOME SUPERIOR', 'Imagem', 120.00),
+('40901203', 'USG APARELHO URINÁRIO', 'Imagem', 110.00),
+('40901238', 'USG PRÓSTATA VIA ABDOMINAL', 'Imagem', 100.00),
+('40901246', 'USG PRÓSTATA TRANSRETAL', 'Imagem', 180.00),
+('40901173', 'USG PÉLVICA GINECOLÓGICA', 'Imagem', 110.00),
+('40901297', 'USG TRANSVAGINAL', 'Imagem', 130.00),
+('40901300', 'USG MAMÁRIA BILATERAL', 'Imagem', 140.00),
+('40901122', 'USG TIREÓIDE', 'Imagem', 110.00),
+('40901130', 'USG TIREÓIDE COM DOPPLER', 'Imagem', 180.00),
+
+-- TOMOGRAFIA (Iniciado com 410)
+('41001184', 'TC DE ABDOME TOTAL', 'Imagem', 450.00),
+('41001176', 'TC DE ABDOME SUPERIOR', 'Imagem', 400.00),
+('41001435', 'TC DE CRÂNIO', 'Imagem', 350.00),
+('41001370', 'TC DE COLUNA CERVICAL', 'Imagem', 380.00),
+('41001451', 'TC DE TÓRAX', 'Imagem', 400.00),
+
+-- RESSONÂNCIA MAGNÉTICA (Iniciado com 411)
+('41101170', 'RM DE ABDOME SUPERIOR', 'Imagem', 850.00),
+('41101014', 'RM DE CRÂNIO (ENCÉFALO)', 'Imagem', 800.00),
+('41101227', 'RM DE COLUNA (POR SEGMENTO)', 'Imagem', 750.00),
+('41101316', 'RM ARTICULAR (POR ARTICULAÇÃO)', 'Imagem', 700.00),
+
+-- CARDIOLOGIA / OUTROS (Iniciado com 401)
+('40101010', 'ECG CONVENCIONAL', 'Exames', 50.00),
+('40101037', 'TESTE ERGOMÉTRICO', 'Exames', 180.00),
+('40101061', 'HOLTER DE 24 HORAS', 'Exames', 220.00),
+('40101029', 'ECOCARDIOGRAMA TRANSTORÁCICO', 'Exames', 200.00)
+
+ON CONFLICT (code) DO NOTHING;

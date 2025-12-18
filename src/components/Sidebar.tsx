@@ -43,9 +43,14 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate, isCollapsed,
                     )}
                 </div>
                 {!isCollapsed && (
-                    <div className="flex flex-col overflow-hidden whitespace-nowrap">
-                        <h1 className="text-slate-900 text-lg font-bold leading-tight tracking-tight">IntegraClinic</h1>
-                        <p className="text-slate-500 text-xs font-medium">Gestão Inteligente</p>
+                    <div className="flex items-center gap-3 px-2">
+                        <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200 shrink-0">
+                            <span className="material-symbols-outlined text-white text-2xl">medical_services</span>
+                        </div>
+                        <div>
+                            <h1 className="text-lg font-bold text-slate-900 tracking-tight leading-none">IntegraClinic</h1>
+                            <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-full mt-1 inline-block">v1.1</span>
+                        </div>
                     </div>
                 )}
             </div>
