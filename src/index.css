@@ -2,8 +2,162 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  body {
-    @apply font-sans;
+@layer utilities {
+  .animate-mesh {
+    background-color: #0047ff;
+    background-image:
+      radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
+      radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 1) 0, transparent 50%),
+      radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 1) 0, transparent 50%);
+    background-size: 200% 200%;
+    animation: mesh 20s ease infinite;
+  }
+
+  @keyframes mesh {
+    0% {
+      background-position: 0% 0%;
+    }
+
+    50% {
+      background-position: 100% 100%;
+    }
+
+    100% {
+      background-position: 0% 0%;
+    }
+  }
+
+  @keyframes star-twinkle {
+
+    0%,
+    100% {
+      opacity: 0.3;
+      transform: scale(1);
+    }
+
+    50% {
+      opacity: 1;
+      transform: scale(1.2);
+    }
+  }
+
+  .animate-twinkle {
+    animation: star-twinkle 3s ease-in-out infinite;
+  }
+
+  /* Global Wide Orbits */
+  @keyframes planet-orbit-wide {
+    0% {
+      transform: translate(-150vw, -20vh) rotate(0deg) scale(0.6);
+      opacity: 0;
+    }
+
+    10% {
+      opacity: 1;
+    }
+
+    50% {
+      transform: translate(20vw, 10vh) rotate(180deg) scale(1.1);
+      opacity: 1;
+    }
+
+    90% {
+      opacity: 1;
+    }
+
+    100% {
+      transform: translate(150vw, 40vh) rotate(360deg) scale(0.6);
+      opacity: 0;
+    }
+  }
+
+  @keyframes planet-orbit-alt {
+    0% {
+      transform: translate(150vw, 80vh) rotate(0deg) scale(0.8);
+      opacity: 0;
+    }
+
+    10% {
+      opacity: 1;
+    }
+
+    50% {
+      transform: translate(-10vw, 30vh) rotate(-180deg) scale(1);
+      opacity: 1;
+    }
+
+    90% {
+      opacity: 1;
+    }
+
+    100% {
+      transform: translate(-150vw, -10vh) rotate(-360deg) scale(0.8);
+      opacity: 0;
+    }
+  }
+
+  .animate-planet-1 {
+    animation: planet-orbit-wide 120s linear infinite;
+  }
+
+  .animate-planet-2 {
+    animation: planet-orbit-alt 90s linear infinite;
+    animation-delay: -30s;
+  }
+
+  .animate-planet-3 {
+    animation: planet-orbit-wide 150s linear infinite;
+    animation-delay: -75s;
+  }
+
+  @keyframes comet-move {
+    0% {
+      transform: translate(-100vw, -100vh) rotate(45deg);
+      opacity: 0;
+    }
+
+    5% {
+      opacity: 1;
+    }
+
+    15% {
+      opacity: 0;
+      transform: translate(100vw, 100vh) rotate(45deg);
+    }
+
+    100% {
+      transform: translate(100vw, 100vh) rotate(45deg);
+      opacity: 0;
+    }
+  }
+
+  .animate-comet {
+    animation: comet-move 15s linear infinite;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 10px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #cbd5e1;
   }
 }

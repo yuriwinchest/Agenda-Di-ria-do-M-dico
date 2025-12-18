@@ -9,10 +9,12 @@ import TeleconsultationView from './components/TeleconsultationView';
 import FinanceView from './components/FinanceView';
 import ReportsView from './components/ReportsView';
 import ProceduresView from './components/ProceduresView';
+import LoginPage from './components/LoginPage';
 import { ViewType } from './types';
 
 const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<ViewType>('teleconsultation');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentView, setCurrentView] = useState<ViewType>('dashboard');
   const [initialViewData, setInitialViewData] = useState<any>(null);
 
   const handleNavigateWithData = (view: ViewType, data?: any) => {
@@ -52,6 +54,10 @@ const App: React.FC = () => {
     setCurrentView(view);
     setIsSidebarCollapsed(true); // "menu lateral se recolha quando uma aba seja aberta"
   };
+
+  if (!isAuthenticated) {
+    return <LoginPage onLogin={() => setIsAuthenticated(true)} />;
+  }
 
   return (
     <div className="flex h-screen bg-[#f6f7f8] overflow-hidden">
