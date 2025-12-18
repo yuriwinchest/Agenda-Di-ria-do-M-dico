@@ -51,7 +51,7 @@ const PatientSelector: React.FC<PatientSelectorProps> = ({ onSelect, initialData
 
         let query = supabase
             .from('patients')
-            .select('id, name, cpf, phone, email, insurance_provider, insurance_card_number');
+            .select('id, name, cpf, phone, email, billing_type, preferred_payment_method, insurance_provider, insurance_card_number');
 
         if (cleanCpf && cleanCpf.length > 0) {
             query = query.or(`name.ilike.*${searchTerm}*,cpf.ilike.*${cleanCpf}*`);
