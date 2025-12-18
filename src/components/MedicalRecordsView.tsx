@@ -48,7 +48,7 @@ const MedicalRecordsView: React.FC = () => {
 
         let query = supabase
             .from('patients')
-            .select('id, name, cpf, insurance_provider, phone');
+            .select('id, name, cpf, insurance_provider');
 
         if (cleanCpf && cleanCpf.length > 0) {
             query = query.or(`name.ilike.%${searchTerm}%,cpf.ilike.%${cleanCpf}%`);
