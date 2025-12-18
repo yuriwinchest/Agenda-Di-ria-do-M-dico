@@ -152,7 +152,7 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({ isOpen, onClose, initia
                         </div>
                         <div>
                             <h2 className="text-lg font-bold text-slate-900 leading-none">Novo Agendamento</h2>
-                            <p className="text-xs text-slate-400 font-medium mt-1">Gestão de Agenda v1.2 (Real-DB)</p>
+                            <p className="text-xs text-slate-400 font-medium mt-1">Gestão de Agenda v1.1</p>
                         </div>
                     </div>
                     <button onClick={handleClose} className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-slate-600 transition-colors">
