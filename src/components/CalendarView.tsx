@@ -67,6 +67,14 @@ const CalendarView: React.FC = () => {
                 endDate = new Date(currentWeekStart.getFullYear(), currentWeekStart.getMonth() + 1, 0);
             }
 
+            // Helper function for local date formatting
+            const formatDate = (date: Date): string => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+
             const { data, error } = await supabase
                 .from('appointments')
                 .select(`
@@ -74,8 +82,8 @@ const CalendarView: React.FC = () => {
                     patient:patients(name),
                     doctor:doctors(name)
                 `)
-                .gte('appointment_date', startDate.toISOString().split('T')[0])
-                .lt('appointment_date', endDate.toISOString().split('T')[0])
+                .gte('appointment_date', formatDate(startDate))
+                .lt('appointment_date', formatDate(endDate))
                 .neq('status', 'cancelled')
                 .order('start_time');
 
@@ -130,15 +138,25 @@ const CalendarView: React.FC = () => {
         return `${start.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} - ${end.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}`;
     };
 
+    // Helper to format date as YYYY-MM-DD without timezone issues
+    const formatDateLocal = (date: Date): string => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
     const handleDayClick = (date: Date) => {
         setSelectedDay(date);
         setViewMode('day');
-        // Don't change currentWeekStart to preserve loaded appointments
+        console.log('Day clicked:', formatDateLocal(date)); // Debug
     };
 
     const getFilteredAppointments = () => {
         if (viewMode === 'day' && selectedDay) {
-            const dateStr = selectedDay.toISOString().split('T')[0];
+            const dateStr = formatDateLocal(selectedDay);
+            console.log('Filtering by date:', dateStr); // Debug
+            console.log('Available appointments:', appointments.map(a => a.appointment_date)); // Debug
             return appointments.filter(apt => apt.appointment_date === dateStr);
         }
         return appointments;
