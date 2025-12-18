@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { cn } from '../../lib/utils';
+import { supabase } from '../../lib/supabase';
 
 export interface Doctor {
     id: string;
@@ -20,20 +21,36 @@ interface ServiceSelectorProps {
 
 const SPECIALTIES = ['Cardiologia', 'Clínica Geral', 'Dermatologia', 'Pediatria', 'Ortopedia'];
 
-const MOCK_DOCTORS: Doctor[] = [
-    { id: '1', name: 'Dr. Roberto Mendes', specialty: 'Cardiologia', avatar: 'https://randomuser.me/api/portraits/men/32.jpg' },
-    { id: '2', name: 'Dra. Ana Paula', specialty: 'Dermatologia', avatar: 'https://randomuser.me/api/portraits/women/44.jpg' },
-    { id: '3', name: 'Dr. João Silva', specialty: 'Clínica Geral', avatar: 'https://randomuser.me/api/portraits/men/45.jpg' },
-    { id: '4', name: 'Dra. Carla Dias', specialty: 'Pediatria', avatar: 'https://randomuser.me/api/portraits/women/68.jpg' },
-    { id: '5', name: 'Dr. Lucas Santos', specialty: 'Ortopedia', avatar: 'https://randomuser.me/api/portraits/men/12.jpg' },
-];
-
 const ServiceSelector: React.FC<ServiceSelectorProps> = ({ onSelect, initialData }) => {
     const [selectedSpecialty, setSelectedSpecialty] = useState<string>(initialData?.specialty || '');
+    const [doctors, setDoctors] = useState<Doctor[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchDoctors();
+    }, []);
+
+    const fetchDoctors = async () => {
+        setLoading(true);
+        const { data, error } = await supabase
+            .from('doctors')
+            .select('*')
+            .order('name');
+
+        if (!error && data) {
+            setDoctors(data.map(d => ({
+                id: d.id,
+                name: d.name,
+                specialty: d.specialty,
+                avatar: d.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(d.name)}&background=random`
+            })));
+        }
+        setLoading(false);
+    };
 
     const filteredDoctors = selectedSpecialty
-        ? MOCK_DOCTORS.filter(d => d.specialty === selectedSpecialty)
-        : MOCK_DOCTORS;
+        ? doctors.filter(d => d.specialty === selectedSpecialty)
+        : doctors;
 
     const handleDoctorClick = (doctor: Doctor) => {
         onSelect({
@@ -78,7 +95,11 @@ const ServiceSelector: React.FC<ServiceSelectorProps> = ({ onSelect, initialData
             <div className="flex-1 overflow-y-auto">
                 <h3 className="text-lg font-semibold text-slate-800 mb-3">Selecione o Profissional</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {filteredDoctors.map(doctor => (
+                    {loading ? (
+                        <div className="col-span-full flex justify-center p-12">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        </div>
+                    ) : filteredDoctors.map(doctor => (
                         <div
                             key={doctor.id}
                             onClick={() => handleDoctorClick(doctor)}
@@ -103,7 +124,7 @@ const ServiceSelector: React.FC<ServiceSelectorProps> = ({ onSelect, initialData
                         </div>
                     ))}
 
-                    {filteredDoctors.length === 0 && (
+                    {!loading && filteredDoctors.length === 0 && (
                         <div className="col-span-full p-8 text-center text-slate-500">
                             Nenhum médico encontrado para esta especialidade.
                         </div>

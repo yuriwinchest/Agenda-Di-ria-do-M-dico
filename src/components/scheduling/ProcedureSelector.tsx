@@ -22,12 +22,12 @@ const ProcedureSelector: React.FC<ProcedureSelectorProps> = ({ onSelect, initial
 
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
-            if (searchTerm.length >= 3) {
+            if (searchTerm.length >= 1) {
                 searchProcedures();
             } else {
                 fetchDefaultProcedures();
             }
-        }, 500);
+        }, 400);
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm]);
 
