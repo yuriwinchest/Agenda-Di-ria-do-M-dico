@@ -14,7 +14,9 @@ create table if not exists public.patients (
   insurance_number text,
   address text,
   notes text,
-  gender text -- Added for full profile
+  gender text, -- Added for full profile
+  health_plan_id uuid, -- Reference to health_plans table
+  insurance_card_number text
 );
 
 -- 2. Doctors Table
@@ -41,7 +43,9 @@ create table if not exists public.appointments (
   end_time time,
   status text default 'scheduled' check (status in ('scheduled', 'confirmed', 'completed', 'cancelled', 'no_show')),
   type text default 'consulta', -- consulta, exame, retorno
-  notes text
+  notes text,
+  authorization_number text, -- Guia de autorização
+  token_code text -- Token de validação do convênio
 );
 
 -- 4. Financial Transactions (Caixa)
@@ -55,7 +59,9 @@ create table if not exists public.transactions (
   status text default 'pending' check (status in ('pending', 'paid', 'refunded', 'cancelled')),
   payment_method text check (payment_method in ('credit', 'debit', 'pix', 'money')), -- matches frontend IDs
   payment_date timestamp with time zone,
-  category text -- e.g. 'consultation', 'exam', 'products'
+  category text, -- e.g. 'consultation', 'exam', 'products'
+  tuss_code text, -- Código TUSS para faturamento
+  billing_status text default 'pending' check (status in ('pending', 'paid', 'refunded', 'cancelled', 'processing_faturamento', 'glosado'))
 );
 
 -- 5. Invoice Items (Detailing services within a transaction)
@@ -106,6 +112,20 @@ create table if not exists public.clinic_settings (
   business_hours jsonb -- Structured opening hours
 );
 
+-- 11. Health Plans (Convênios)
+create table if not exists public.health_plans (
+  id uuid default uuid_generate_v4() primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  name text not null, -- e.g. SulAmérica, Unimed, Bradesco
+  ans_code text, -- Registro ANS da operadora
+  portal_url text, -- Link para portal de faturamento/elegibilidade
+  tiss_version text default '4.01.01',
+  active boolean default true
+);
+
+-- Add Foreign Key to Patients (if not already handled)
+-- alter table public.patients add constraint fk_patients_health_plan foreign key (health_plan_id) references public.health_plans(id);
+
 -- 9. Profiles (Link Auth Users to Staff Roles)
 create table if not exists public.profiles (
   id uuid references auth.users on delete cascade primary key,
@@ -136,15 +156,39 @@ alter table public.medical_records enable row level security;
 alter table public.clinic_settings enable row level security;
 alter table public.profiles enable row level security;
 alter table public.specialty_targets enable row level security;
+alter table public.health_plans enable row level security;
 
 -- Policies (Allow all for development)
+-- Policies (Allow all for development)
+DROP POLICY IF EXISTS "Enable all access for anon" on public.patients;
 create policy "Enable all access for anon" on public.patients for all using (true);
+
+DROP POLICY IF EXISTS "Enable all access for anon" on public.doctors;
 create policy "Enable all access for anon" on public.doctors for all using (true);
+
+DROP POLICY IF EXISTS "Enable all access for anon" on public.appointments;
 create policy "Enable all access for anon" on public.appointments for all using (true);
+
+DROP POLICY IF EXISTS "Enable all access for anon" on public.transactions;
 create policy "Enable all access for anon" on public.transactions for all using (true);
+
+DROP POLICY IF EXISTS "Enable all access for anon" on public.invoice_items;
 create policy "Enable all access for anon" on public.invoice_items for all using (true);
+
+DROP POLICY IF EXISTS "Enable all access for anon" on public.services;
 create policy "Enable all access for anon" on public.services for all using (true);
+
+DROP POLICY IF EXISTS "Enable all access for anon" on public.medical_records;
 create policy "Enable all access for anon" on public.medical_records for all using (true);
+
+DROP POLICY IF EXISTS "Enable all access for anon" on public.clinic_settings;
 create policy "Enable all access for anon" on public.clinic_settings for all using (true);
+
+DROP POLICY IF EXISTS "Enable all access for anon" on public.profiles;
 create policy "Enable all access for anon" on public.profiles for all using (true);
+
+DROP POLICY IF EXISTS "Enable all access for anon" on public.specialty_targets;
 create policy "Enable all access for anon" on public.specialty_targets for all using (true);
+
+DROP POLICY IF EXISTS "Enable all access for anon" on public.health_plans;
+create policy "Enable all access for anon" on public.health_plans for all using (true);

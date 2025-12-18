@@ -7,6 +7,8 @@ export interface Patient {
     weight?: string;
     height?: string;
     insurance: string;
+    healthPlanId?: string; // Reference to HealthPlan
+    insuranceCardNumber?: string;
     type: string;
     email?: string;
     phone?: string;
@@ -21,6 +23,8 @@ export interface Appointment {
     time: string;
     patient?: Patient;
     status: AppointmentStatus;
+    authorizationNumber?: string;
+    tokenCode?: string;
 }
 
 export interface StatCardProps {
