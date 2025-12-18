@@ -8,6 +8,7 @@ import CalendarView from './components/CalendarView';
 import TeleconsultationView from './components/TeleconsultationView';
 import FinanceView from './components/FinanceView';
 import ReportsView from './components/ReportsView';
+import ProceduresView from './components/ProceduresView';
 import { ViewType } from './types';
 
 const App: React.FC = () => {
@@ -27,6 +28,8 @@ const App: React.FC = () => {
         return <TeleconsultationView />;
       case 'finance':
         return <FinanceView />;
+      case 'procedures':
+        return <ProceduresView />;
       case 'reports':
         return <ReportsView />;
       default:

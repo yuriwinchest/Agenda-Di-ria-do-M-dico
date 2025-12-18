@@ -35,4 +35,4 @@ export interface StatCardProps {
     bgClass: string;
 }
 
-export type ViewType = 'dashboard' | 'calendar' | 'teleconsultation' | 'patients' | 'records' | 'doctors' | 'finance' | 'reports' | 'settings';
+export type ViewType = 'dashboard' | 'calendar' | 'teleconsultation' | 'patients' | 'records' | 'doctors' | 'finance' | 'reports' | 'settings' | 'procedures';

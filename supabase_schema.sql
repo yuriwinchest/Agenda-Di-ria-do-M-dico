@@ -126,6 +126,28 @@ create table if not exists public.health_plans (
 -- Add Foreign Key to Patients (if not already handled)
 -- alter table public.patients add constraint fk_patients_health_plan foreign key (health_plan_id) references public.health_plans(id);
 
+-- 12. Procedures Table (Tabela de Procedimentos/TUSS)
+create table if not exists public.procedures (
+  id uuid default uuid_generate_v4() primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  code text unique not null, -- Código TUSS
+  name text not null,
+  description text,
+  category text, -- Consulta, Exame, Cirurgia, etc.
+  base_price numeric(10,2) not null,
+  active boolean default true
+);
+
+-- Inserindo alguns procedimentos reais (Exemplos TUSS)
+insert into public.procedures (code, name, category, base_price) values
+('10101012', 'CONSULTA EM CONSULTÓRIO (NO HORÁRIO NORMAL OU PREESTABELECIDO)', 'Consultas', 150.00),
+('10101039', 'CONSULTA EM DOMICÍLIO', 'Consultas', 250.00),
+('40101010', 'ECG CONVENCIONAL DE ATÉ 12 DERIVAÇÕES', 'Exames', 45.00),
+('40301000', 'HEMOGRAMA COMPLETO', 'Exames', 25.00),
+('40302000', 'GLICOSE', 'Exames', 15.00),
+('40801010', 'RADIOGRAFIA DE TÓRAX - 1 POSIÇÃO', 'Exames', 60.00)
+on conflict (code) do nothing;
+
 -- 9. Profiles (Link Auth Users to Staff Roles)
 create table if not exists public.profiles (
   id uuid references auth.users on delete cascade primary key,
@@ -157,6 +179,7 @@ alter table public.clinic_settings enable row level security;
 alter table public.profiles enable row level security;
 alter table public.specialty_targets enable row level security;
 alter table public.health_plans enable row level security;
+alter table public.procedures enable row level security;
 
 -- Policies (Allow all for development)
 -- Policies (Allow all for development)
@@ -192,3 +215,6 @@ create policy "Enable all access for anon" on public.specialty_targets for all u
 
 DROP POLICY IF EXISTS "Enable all access for anon" on public.health_plans;
 create policy "Enable all access for anon" on public.health_plans for all using (true);
+
+DROP POLICY IF EXISTS "Enable all access for anon" on public.procedures;
+create policy "Enable all access for anon" on public.procedures for all using (true);

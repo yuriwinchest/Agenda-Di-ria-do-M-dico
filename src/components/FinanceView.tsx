@@ -32,6 +32,20 @@ const FinanceView: React.FC = () => {
     const [authNumber, setAuthNumber] = useState<string>('');
     const [eligibilityStatus, setEligibilityStatus] = useState<'idle' | 'checking' | 'active' | 'denied'>('idle');
 
+    // Modals
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [showProcedureSearch, setShowProcedureSearch] = useState(false);
+    const [isEditingPatient, setIsEditingPatient] = useState(false);
+    const [paymentStep, setPaymentStep] = useState<'method' | 'processing' | 'success'>('method');
+
+    // Patient Edit states
+    const [editPatient, setEditPatient] = useState({
+        name: 'Ana Silva',
+        cpf: '123.456.789-00',
+        phone: '(11) 99887-7665',
+        email: 'ana.silva@email.com'
+    });
+
     const queueItems: QueueItem[] = [
         { id: '1', name: 'Ana Silva', time: '14:30', service: 'Consulta Rotina - Dr. Mendes', insurance: 'Particular', value: 350.00, status: 'pending', hasHealthPlan: false },
         { id: '2', name: 'Carlos Souza', time: '15:00', service: 'Exame Cardiológico', insurance: 'Unimed', insuranceCard: '1234.5678.9012.3456', value: 0.00, status: 'pending', hasHealthPlan: true },
@@ -153,10 +167,32 @@ const FinanceView: React.FC = () => {
                             </div>
                             <div className="flex-1 w-full">
                                 <div className="flex justify-between items-start">
-                                    <div>
-                                        <h2 className="text-2xl font-bold text-slate-900">{selectedPatient?.name}</h2>
-                                        <p className="text-sm text-slate-500 mt-1">CPF: 123.456.789-00 • Nasc: 12/05/1985 (39 anos)</p>
-                                    </div>
+                                    {!isEditingPatient ? (
+                                        <div>
+                                            <h2 className="text-2xl font-bold text-slate-900">{editPatient.name}</h2>
+                                            <p className="text-sm text-slate-500 mt-1">CPF: {editPatient.cpf} • Nasc: 12/05/1985 (39 anos)</p>
+                                            <button onClick={() => setIsEditingPatient(true)} className="text-xs text-blue-600 font-bold mt-2 hover:underline flex items-center gap-1">
+                                                <span className="material-symbols-outlined text-[14px]">edit</span> Editar Dados
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-2 gap-3 flex-1 max-w-md">
+                                            <input
+                                                value={editPatient.name}
+                                                onChange={e => setEditPatient({ ...editPatient, name: e.target.value })}
+                                                className="col-span-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+                                            />
+                                            <input
+                                                value={editPatient.cpf}
+                                                onChange={e => setEditPatient({ ...editPatient, cpf: e.target.value })}
+                                                className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+                                            />
+                                            <button
+                                                onClick={() => setIsEditingPatient(false)}
+                                                className="bg-slate-900 text-white px-4 rounded-lg text-xs font-bold"
+                                            >Salvar</button>
+                                        </div>
+                                    )}
                                     <div className="flex flex-col items-end gap-2">
                                         <span className={`px-3 py-1 rounded-full border text-xs font-bold ${selectedPatient?.hasHealthPlan ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-orange-50 text-orange-700 border-orange-100'}`}>
                                             {selectedPatient?.insurance}
@@ -310,7 +346,10 @@ const FinanceView: React.FC = () => {
                                     <span className="material-symbols-outlined text-[20px]">print</span>
                                     Gerar Guia TISS
                                 </button>
-                                <button className="px-8 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 flex items-center justify-center gap-2 flex-1 xl:flex-none">
+                                <button
+                                    onClick={() => setShowPaymentModal(true)}
+                                    className="px-8 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 flex items-center justify-center gap-2 flex-1 xl:flex-none"
+                                >
                                     <span className="material-symbols-outlined text-[20px]">check</span>
                                     {selectedPatient?.hasHealthPlan ? 'Finalizar e Enviar Lote' : 'Finalizar Pagamento'}
                                 </button>
@@ -319,6 +358,73 @@ const FinanceView: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Payment Modal */}
+            {showPaymentModal && (
+                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+                        {paymentStep === 'method' && (
+                            <div className="p-8">
+                                <div className="flex justify-between items-start mb-6">
+                                    <h3 className="text-2xl font-bold text-slate-900">Finalizar Pagamento</h3>
+                                    <button onClick={() => setShowPaymentModal(false)} className="text-slate-400 hover:text-slate-600">
+                                        <span className="material-symbols-outlined">close</span>
+                                    </button>
+                                </div>
+                                <div className="text-center mb-8">
+                                    <p className="text-slate-500 text-sm mb-1 uppercase tracking-widest font-bold">Total a receber</p>
+                                    <p className="text-4xl font-black text-blue-600">{formatCurrency(selectedPatient?.hasHealthPlan ? 0 : 350)}</p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 mb-8">
+                                    <button onClick={() => setPaymentStep('processing')} className="flex flex-col items-center gap-3 p-6 rounded-2xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50 transition-all group">
+                                        <span className="material-symbols-outlined text-4xl text-slate-400 group-hover:text-blue-600">qr_code_2</span>
+                                        <span className="font-bold text-slate-700">PIX</span>
+                                    </button>
+                                    <button onClick={() => setPaymentStep('processing')} className="flex flex-col items-center gap-3 p-6 rounded-2xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50 transition-all group">
+                                        <span className="material-symbols-outlined text-4xl text-slate-400 group-hover:text-blue-600">credit_card</span>
+                                        <span className="font-bold text-slate-700">Cartão</span>
+                                    </button>
+                                </div>
+                                <button onClick={() => setShowPaymentModal(false)} className="w-full py-4 text-slate-500 font-bold hover:text-slate-700">Cancelar</button>
+                            </div>
+                        )}
+
+                        {paymentStep === 'processing' && (
+                            <div className="p-12 flex flex-col items-center text-center">
+                                <div className="w-48 h-48 bg-slate-100 rounded-2xl flex items-center justify-center mb-8 p-4">
+                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=ExamplePix" alt="QR Code" className="w-full h-full opacity-80" />
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-900 mb-2">Aguardando Pagamento</h3>
+                                <p className="text-slate-500 text-sm mb-8">Escaneie o QR Code acima para pagar via PIX</p>
+                                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-8">
+                                    <div className="bg-blue-600 h-full animate-progress-loading w-full"></div>
+                                </div>
+                                <button onClick={() => setPaymentStep('success')} className="text-blue-600 font-bold">Simular Sucesso</button>
+                            </div>
+                        )}
+
+                        {paymentStep === 'success' && (
+                            <div className="p-12 flex flex-col items-center text-center animate-in zoom-in-95 duration-500">
+                                <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6">
+                                    <span className="material-symbols-outlined text-5xl">check_circle</span>
+                                </div>
+                                <h3 className="text-2xl font-bold text-slate-900 mb-2">Pagamento Realizado!</h3>
+                                <p className="text-slate-500 mb-8">A transação foi concluída com sucesso e o recibo enviado ao paciente.</p>
+                                <button
+                                    onClick={() => {
+                                        setShowPaymentModal(false);
+                                        setPaymentStep('method');
+                                    }}
+                                    className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold shadow-lg"
+                                >
+                                    Concluir e Voltar
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
