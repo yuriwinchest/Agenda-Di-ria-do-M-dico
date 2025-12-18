@@ -24,6 +24,7 @@ const CalendarView: React.FC = () => {
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentWeekStart, setCurrentWeekStart] = useState<Date>(getWeekStart(new Date()));
+    const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week');
 
     const days = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
     const hours = Array.from({ length: 11 }, (_, i) => i + 8); // 8:00 to 18:00
@@ -43,13 +44,26 @@ const CalendarView: React.FC = () => {
 
     useEffect(() => {
         loadAppointments();
-    }, [currentWeekStart]);
+    }, [currentWeekStart, viewMode]);
 
     const loadAppointments = async () => {
         setLoading(true);
         try {
-            const weekEnd = new Date(currentWeekStart);
-            weekEnd.setDate(weekEnd.getDate() + 7);
+            let startDate: Date;
+            let endDate: Date;
+
+            if (viewMode === 'day') {
+                startDate = new Date(currentWeekStart);
+                endDate = new Date(currentWeekStart);
+                endDate.setDate(endDate.getDate() + 1);
+            } else if (viewMode === 'week') {
+                startDate = new Date(currentWeekStart);
+                endDate = new Date(currentWeekStart);
+                endDate.setDate(endDate.getDate() + 7);
+            } else { // month
+                startDate = new Date(currentWeekStart.getFullYear(), currentWeekStart.getMonth(), 1);
+                endDate = new Date(currentWeekStart.getFullYear(), currentWeekStart.getMonth() + 1, 0);
+            }
 
             const { data, error } = await supabase
                 .from('appointments')
@@ -58,8 +72,8 @@ const CalendarView: React.FC = () => {
                     patient:patients(name),
                     doctor:doctors(name)
                 `)
-                .gte('appointment_date', currentWeekStart.toISOString().split('T')[0])
-                .lt('appointment_date', weekEnd.toISOString().split('T')[0])
+                .gte('appointment_date', startDate.toISOString().split('T')[0])
+                .lt('appointment_date', endDate.toISOString().split('T')[0])
                 .neq('status', 'cancelled')
                 .order('start_time');
 
@@ -138,9 +152,33 @@ const CalendarView: React.FC = () => {
                 <div className="flex items-center gap-4">
                     <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Agenda</h2>
                     <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1">
-                        <button className="px-3 py-1 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded">Mês</button>
-                        <button className="px-3 py-1 text-sm font-medium bg-blue-50 text-blue-700 rounded shadow-sm">Semana</button>
-                        <button className="px-3 py-1 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded">Dia</button>
+                        <button
+                            onClick={() => setViewMode('month')}
+                            className={cn(
+                                "px-3 py-1 text-sm font-medium rounded transition-all",
+                                viewMode === 'month' ? 'bg-blue-50 text-blue-700 shadow-sm' : 'text-slate-600 hover:bg-slate-50'
+                            )}
+                        >
+                            Mês
+                        </button>
+                        <button
+                            onClick={() => setViewMode('week')}
+                            className={cn(
+                                "px-3 py-1 text-sm font-medium rounded transition-all",
+                                viewMode === 'week' ? 'bg-blue-50 text-blue-700 shadow-sm' : 'text-slate-600 hover:bg-slate-50'
+                            )}
+                        >
+                            Semana
+                        </button>
+                        <button
+                            onClick={() => setViewMode('day')}
+                            className={cn(
+                                "px-3 py-1 text-sm font-medium rounded transition-all",
+                                viewMode === 'day' ? 'bg-blue-50 text-blue-700 shadow-sm' : 'text-slate-600 hover:bg-slate-50'
+                            )}
+                        >
+                            Dia
+                        </button>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">

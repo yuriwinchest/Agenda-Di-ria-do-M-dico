@@ -15,11 +15,13 @@ const AppointmentDetailsModal: React.FC<AppointmentDetailsModalProps> = ({ isOpe
     const [appointment, setAppointment] = useState<any>(null);
     const [patient, setPatient] = useState<any>(null);
     const [doctor, setDoctor] = useState<any>(null);
+    const [allDoctors, setAllDoctors] = useState<any[]>([]);
 
     // Editable fields
     const [status, setStatus] = useState('');
     const [observations, setObservations] = useState('');
     const [startTime, setStartTime] = useState('');
+    const [selectedDoctorId, setSelectedDoctorId] = useState('');
 
     useEffect(() => {
         if (isOpen && appointmentId) {
@@ -30,6 +32,13 @@ const AppointmentDetailsModal: React.FC<AppointmentDetailsModalProps> = ({ isOpe
     const loadAppointmentDetails = async () => {
         setLoading(true);
         try {
+            // Load all doctors for dropdown
+            const { data: docs } = await supabase
+                .from('doctors')
+                .select('*')
+                .order('name');
+            if (docs) setAllDoctors(docs);
+
             // Load appointment
             const { data: appt } = await supabase
                 .from('appointments')
@@ -42,6 +51,7 @@ const AppointmentDetailsModal: React.FC<AppointmentDetailsModalProps> = ({ isOpe
                 setStatus(appt.status || 'scheduled');
                 setObservations(appt.observations || '');
                 setStartTime(appt.start_time || '');
+                setSelectedDoctorId(appt.doctor_id || '');
 
                 // Load patient
                 if (appt.patient_id) {
@@ -78,7 +88,8 @@ const AppointmentDetailsModal: React.FC<AppointmentDetailsModalProps> = ({ isOpe
                 .update({
                     status,
                     observations,
-                    start_time: startTime
+                    start_time: startTime,
+                    doctor_id: selectedDoctorId
                 })
                 .eq('id', appointmentId);
 
@@ -156,14 +167,24 @@ const AppointmentDetailsModal: React.FC<AppointmentDetailsModalProps> = ({ isOpe
                                 <p className="text-sm text-slate-600">Telefone: {patient?.phone || 'N/A'}</p>
                             </div>
 
-                            {/* Doctor Info */}
+                            {/* Doctor Info - Editable */}
                             <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
                                 <h3 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-1">
                                     <span className="material-symbols-outlined text-sm">medical_services</span>
-                                    Médico
+                                    Médico (Editável)
                                 </h3>
-                                <p className="font-bold text-slate-900">{doctor?.name || 'Não informado'}</p>
-                                <p className="text-sm text-slate-600">{doctor?.specialty || 'N/A'}</p>
+                                <select
+                                    value={selectedDoctorId}
+                                    onChange={(e) => setSelectedDoctorId(e.target.value)}
+                                    className="w-full px-3 py-2 rounded-lg border border-slate-200 font-semibold text-slate-900 bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                >
+                                    <option value="">Selecione um médico</option>
+                                    {allDoctors.map(doc => (
+                                        <option key={doc.id} value={doc.id}>
+                                            {doc.name} - {doc.specialty}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
 
                             {/* Appointment Details */}
