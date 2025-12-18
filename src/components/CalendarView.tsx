@@ -25,6 +25,8 @@ const CalendarView: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [currentWeekStart, setCurrentWeekStart] = useState<Date>(getWeekStart(new Date()));
     const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week');
+    const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+    const [displayMode, setDisplayMode] = useState<'grid' | 'list'>('grid');
 
     const days = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
     const hours = Array.from({ length: 11 }, (_, i) => i + 8); // 8:00 to 18:00
@@ -128,6 +130,18 @@ const CalendarView: React.FC = () => {
         return `${start.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} - ${end.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}`;
     };
 
+    const handleDayClick = (date: Date) => {
+        setSelectedDay(date);
+        setViewMode('day');
+        setCurrentWeekStart(getWeekStart(date));
+    };
+
+    const getFilteredAppointments = () => {
+        if (!selectedDay) return appointments;
+        const dateStr = selectedDay.toISOString().split('T')[0];
+        return appointments.filter(apt => apt.appointment_date === dateStr);
+    };
+
     return (
         <div className="flex flex-col gap-3 h-full relative">
             <SchedulerModal
@@ -198,6 +212,32 @@ const CalendarView: React.FC = () => {
 
                     <div className="h-8 w-px bg-slate-200"></div>
 
+                    {/* Display Mode Toggle */}
+                    <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1">
+                        <button
+                            onClick={() => setDisplayMode('grid')}
+                            className={cn(
+                                "p-1.5 rounded transition-all",
+                                displayMode === 'grid' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50'
+                            )}
+                            title="Visualização em Grade"
+                        >
+                            <span className="material-symbols-outlined text-[20px]">grid_view</span>
+                        </button>
+                        <button
+                            onClick={() => setDisplayMode('list')}
+                            className={cn(
+                                "p-1.5 rounded transition-all",
+                                displayMode === 'list' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50'
+                            )}
+                            title="Visualização em Lista"
+                        >
+                            <span className="material-symbols-outlined text-[20px]">view_list</span>
+                        </button>
+                    </div>
+
+                    <div className="h-8 w-px bg-slate-200"></div>
+
                     <button
                         onClick={() => setIsSchedulerOpen(true)}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2"
@@ -214,22 +254,86 @@ const CalendarView: React.FC = () => {
                     <div className="p-4 border-r border-slate-200 w-20"></div>
                     {weekDates.map((date, i) => {
                         const isToday = date.toDateString() === new Date().toDateString();
+                        const isSelected = selectedDay?.toDateString() === date.toDateString();
                         return (
-                            <div key={i} className={cn("p-3 text-center border-r border-slate-200 last:border-r-0", isToday && 'bg-blue-50/50')}>
-                                <p className={cn("text-xs font-semibold uppercase", isToday ? 'text-blue-600' : 'text-slate-500')}>{days[date.getDay()]}</p>
-                                <p className={cn("text-lg font-bold mt-1", isToday ? 'text-blue-600' : 'text-slate-800')}>{date.getDate()}</p>
-                            </div>
+                            <button
+                                key={i}
+                                onClick={() => handleDayClick(date)}
+                                className={cn(
+                                    "p-3 text-center border-r border-slate-200 last:border-r-0 transition-all hover:bg-blue-50 cursor-pointer",
+                                    isToday && 'bg-blue-50/50',
+                                    isSelected && 'bg-blue-100 ring-2 ring-blue-500 ring-inset'
+                                )}
+                            >
+                                <p className={cn("text-xs font-semibold uppercase", isToday || isSelected ? 'text-blue-600' : 'text-slate-500')}>{days[date.getDay()]}</p>
+                                <p className={cn("text-lg font-bold mt-1", isToday || isSelected ? 'text-blue-600' : 'text-slate-800')}>{date.getDate()}</p>
+                            </button>
                         );
                     })}
                 </div>
 
-                {/* Calendar Grid */}
+                {/* Calendar Content - Grid or List */}
                 <div className="overflow-y-auto flex-1">
                     {loading ? (
                         <div className="flex justify-center items-center h-64">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
                         </div>
+                    ) : displayMode === 'list' ? (
+                        /* List View */
+                        <div className="p-4 space-y-3">
+                            {getFilteredAppointments().length === 0 ? (
+                                <div className="text-center py-12 text-slate-400">
+                                    <span className="material-symbols-outlined text-5xl mb-2">event_busy</span>
+                                    <p>Nenhum agendamento encontrado</p>
+                                </div>
+                            ) : (
+                                getFilteredAppointments().map(apt => {
+                                    const colors = getAppointmentColor(apt.type);
+                                    return (
+                                        <div
+                                            key={apt.id}
+                                            onClick={() => setSelectedAppointmentId(apt.id)}
+                                            className={cn(
+                                                "p-4 rounded-lg border-l-4 cursor-pointer hover:shadow-md transition-all",
+                                                colors.bg,
+                                                colors.border
+                                            )}
+                                        >
+                                            <div className="flex items-start justify-between">
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <span className={cn("font-bold text-sm", colors.text)}>{apt.type}</span>
+                                                        <span className="text-xs text-slate-400">•</span>
+                                                        <span className="text-sm font-semibold text-slate-700">{apt.start_time}</span>
+                                                    </div>
+                                                    <p className="text-slate-900 font-medium">{apt.patient?.name || 'Sem paciente'}</p>
+                                                    <p className="text-sm text-slate-600 mt-1">{apt.doctor?.name || 'Sem médico'}</p>
+                                                    {apt.observations && (
+                                                        <p className="text-xs text-slate-500 mt-2 line-clamp-2">{apt.observations}</p>
+                                                    )}
+                                                </div>
+                                                <div className="flex flex-col items-end gap-2">
+                                                    <span className="px-2 py-1 text-xs font-medium bg-white rounded border border-slate-200">
+                                                        {new Date(apt.appointment_date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                                                    </span>
+                                                    <span className={cn(
+                                                        "px-2 py-1 text-xs font-medium rounded",
+                                                        apt.status === 'confirmed' ? 'bg-green-100 text-green-700' :
+                                                            apt.status === 'completed' ? 'bg-blue-100 text-blue-700' :
+                                                                'bg-yellow-100 text-yellow-700'
+                                                    )}>
+                                                        {apt.status === 'confirmed' ? 'Confirmado' :
+                                                            apt.status === 'completed' ? 'Concluído' : 'Agendado'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
                     ) : (
+                        /* Grid View */
                         <div className="grid grid-cols-8">
                             {/* Time Column */}
                             <div className="w-20 border-r border-slate-200 bg-slate-50/30">
