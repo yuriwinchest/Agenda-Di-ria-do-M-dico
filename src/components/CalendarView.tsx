@@ -173,6 +173,7 @@ const CalendarView: React.FC = () => {
             'Consulta': { bg: 'bg-indigo-50', border: 'border-indigo-500', text: 'text-indigo-700' },
             'Retorno': { bg: 'bg-emerald-50', border: 'border-emerald-500', text: 'text-emerald-700' },
             'Exame': { bg: 'bg-amber-50', border: 'border-amber-500', text: 'text-amber-700' },
+            'blocked': { bg: 'bg-slate-100 opacity-90', border: 'border-slate-300', text: 'text-slate-500' },
             'default': { bg: 'bg-blue-50', border: 'border-blue-500', text: 'text-blue-700' }
         };
         return colors[type] || colors.default;
@@ -561,15 +562,26 @@ const CalendarView: React.FC = () => {
                                                         minHeight: '30px'
                                                     }}
                                                 >
-                                                    <p className="text-xs font-bold text-slate-900 truncate leading-tight">{apt.patient?.name || 'Sem paciente'}</p>
-                                                    <div className="flex items-center gap-1 mt-0.5">
-                                                        <span className="material-symbols-outlined text-[10px] text-slate-500">schedule</span>
-                                                        <p className="text-[10px] font-medium text-slate-700">{apt.start_time.slice(0, 5)}</p>
-                                                    </div>
-                                                    {apt.doctor?.name && (
-                                                        <p className="text-[9px] text-slate-500 truncate mt-0.5 border-t border-slate-200/50 pt-0.5">
-                                                            {apt.doctor.name}
-                                                        </p>
+                                                    {apt.type === 'blocked' ? (
+                                                        <div className="flex flex-col h-full justify-center items-center opacity-75">
+                                                            <div className="flex items-center justify-center gap-1 mb-0.5">
+                                                                <span className="material-symbols-outlined text-[14px]">block</span>
+                                                            </div>
+                                                            <p className="text-[10px] font-bold text-center leading-none uppercase tracking-wide truncate w-full px-1">{apt.notes || 'Bloqueado'}</p>
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            <p className="text-xs font-bold text-slate-900 truncate leading-tight">{apt.patient?.name || 'Sem paciente'}</p>
+                                                            <div className="flex items-center gap-1 mt-0.5">
+                                                                <span className="material-symbols-outlined text-[10px] text-slate-500">schedule</span>
+                                                                <p className="text-[10px] font-medium text-slate-700">{apt.start_time.slice(0, 5)}</p>
+                                                            </div>
+                                                            {apt.doctor?.name && (
+                                                                <p className="text-[9px] text-slate-500 truncate mt-0.5 border-t border-slate-200/50 pt-0.5">
+                                                                    {apt.doctor.name}
+                                                                </p>
+                                                            )}
+                                                        </>
                                                     )}
                                                 </div>
                                             );

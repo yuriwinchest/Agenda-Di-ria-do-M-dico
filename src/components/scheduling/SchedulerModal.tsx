@@ -29,6 +29,8 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({ isOpen, onClose, initia
     const [observations, setObservations] = useState('');
     const [billingType, setBillingType] = useState('Particular');
     const [paymentMethod, setPaymentMethod] = useState('');
+    const [isBlock, setIsBlock] = useState(false);
+    const [blockReason, setBlockReason] = useState('');
 
     useEffect(() => {
         if (isOpen && initialDate) {
@@ -74,6 +76,7 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({ isOpen, onClose, initia
     };
 
     const isUUID = (str: string) => {
+        if (str === 'BLOCK') return true;
         const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
         // More lenient check for Postgres UUIDs (any version)
         const lenientRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -98,6 +101,9 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({ isOpen, onClose, initia
 
         setLoading(true);
         try {
+            // Check if blocking
+            const isBlocking = selectedPatient.id === 'BLOCK';
+
             // Helper to format date without timezone issues
             const formatDateLocal = (date: Date): string => {
                 const year = date.getFullYear();
@@ -110,39 +116,41 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({ isOpen, onClose, initia
             const { data: appointment, error: appError } = await supabase
                 .from('appointments')
                 .insert([{
-                    patient_id: selectedPatient.id,
+                    patient_id: isBlocking ? null : selectedPatient.id,
                     doctor_id: selectedService.doctor.id,
                     appointment_date: formatDateLocal(selectedDate),
                     start_time: selectedSlot.time,
                     status: 'confirmed',
-                    type: selectedProcedure.name,
-                    observations: observations,
+                    type: isBlocking ? 'blocked' : selectedProcedure.name,
+                    observations: isBlocking ? selectedPatient.name : observations,
                     billing_type: billingType,
                     payment_method: paymentMethod,
-                    authorization_number: 'AUTO-' + Math.random().toString(36).substring(7).toUpperCase()
+                    authorization_number: isBlocking ? null : ('AUTO-' + Math.random().toString(36).substring(7).toUpperCase())
                 }])
                 .select()
                 .single();
 
             if (appError) throw appError;
 
-            // 2. Create Transaction
-            const { error: transError } = await supabase
-                .from('transactions')
-                .insert([{
-                    appointment_id: appointment.id,
-                    patient_id: selectedPatient.id,
-                    description: `${selectedProcedure.name} - ${selectedService.doctor.name}`,
-                    amount: selectedProcedure.base_price,
-                    tuss_code: selectedProcedure.code,
-                    status: 'pending',
-                    billing_status: billingType === 'Convênio' ? 'auditing' : 'pending',
-                    category: 'consultation'
-                }]);
+            // 2. Create Transaction (ONLY IF NOT BLOCKING)
+            if (!isBlocking) {
+                const { error: transError } = await supabase
+                    .from('transactions')
+                    .insert([{
+                        appointment_id: appointment.id,
+                        patient_id: selectedPatient.id,
+                        description: `${selectedProcedure.name} - ${selectedService.doctor.name}`,
+                        amount: selectedProcedure.base_price,
+                        tuss_code: selectedProcedure.code,
+                        status: 'pending',
+                        billing_status: billingType === 'Convênio' ? 'auditing' : 'pending',
+                        category: 'consultation'
+                    }]);
 
-            if (transError) throw transError;
+                if (transError) throw transError;
+            }
 
-            alert('Agendamento e faturamento registrados com sucesso!');
+            alert(isBlocking ? 'Bloqueio de agenda realizado com sucesso!' : 'Agendamento e faturamento registrados com sucesso!');
             handleClose();
         } catch (error: any) {
             console.error('Submit error:', error);
@@ -161,12 +169,18 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({ isOpen, onClose, initia
                 {/* Header Compact - Fixed */}
                 <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
                     <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-100">
-                            <span className="material-symbols-outlined text-white text-2xl">event_available</span>
+                        <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg transition-colors", isBlock ? "bg-rose-500 shadow-rose-100" : "bg-blue-600 shadow-blue-100")}>
+                            <span className="material-symbols-outlined text-white text-2xl">{isBlock ? 'block' : 'event_available'}</span>
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-slate-900 leading-none">Novo Agendamento</h2>
-                            <p className="text-xs text-slate-400 font-medium mt-1">Gestão de Agenda v1.1</p>
+                            <div className="flex items-center gap-2 mb-1">
+                                <h2 className="text-lg font-bold text-slate-900 leading-none">{isBlock ? 'Novo Bloqueio' : 'Novo Agendamento'}</h2>
+                                <div className="flex bg-slate-100 p-0.5 rounded-lg ml-2">
+                                    <button onClick={() => setIsBlock(false)} className={cn("px-2 py-0.5 rounded-md text-xs font-bold transition-all", !isBlock ? "bg-white text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}>Consulta</button>
+                                    <button onClick={() => setIsBlock(true)} className={cn("px-2 py-0.5 rounded-md text-xs font-bold transition-all", isBlock ? "bg-white text-rose-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}>Bloqueio</button>
+                                </div>
+                            </div>
+                            <p className="text-xs text-slate-400 font-medium">{isBlock ? 'Bloquear horário na agenda' : 'Gestão de Agenda v1.1'}</p>
                         </div>
                     </div>
                     <button onClick={handleClose} className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-slate-600 transition-colors">
@@ -212,10 +226,54 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({ isOpen, onClose, initia
                 <div className="flex-1 overflow-y-auto p-6 md:p-10 bg-white custom-scrollbar">
                     <div className="max-w-3xl mx-auto">
                         {currentStep === 1 && (
-                            <PatientSelector
-                                onSelect={handlePatientSelect}
-                                initialData={selectedPatient}
-                            />
+                            isBlock ? (
+                                <div className="flex flex-col items-center justify-center min-h-[400px] animate-in fade-in duration-300">
+                                    <div className="w-full max-w-md space-y-6">
+                                        <div className="text-center space-y-2">
+                                            <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                <span className="material-symbols-outlined text-rose-600 text-3xl">block</span>
+                                            </div>
+                                            <h3 className="text-xl font-bold text-slate-900">Bloqueio de Agenda</h3>
+                                            <p className="text-slate-500 text-sm">Informe o motivo para bloquear horários (ex: Almoço, Reunião).</p>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700 mb-1">Motivo do Bloqueio</label>
+                                                <input
+                                                    type="text"
+                                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 outline-none transition-all"
+                                                    placeholder="Digite o motivo..."
+                                                    value={blockReason}
+                                                    onChange={(e) => setBlockReason(e.target.value)}
+                                                    autoFocus
+                                                />
+                                            </div>
+
+                                            <button
+                                                onClick={() => {
+                                                    if (!blockReason.trim()) return alert('Por favor, informe um motivo.');
+                                                    handlePatientSelect({ id: 'BLOCK', name: 'Bloqueio: ' + blockReason } as any);
+                                                }}
+                                                className="w-full py-3.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold shadow-lg shadow-rose-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+                                            >
+                                                <span>Continuar para Seleção de Médico</span>
+                                                <span className="material-symbols-outlined">arrow_forward</span>
+                                            </button>
+
+                                            <div className="bg-rose-50 border border-rose-100 rounded-lg p-4 text-xs text-rose-800 flex items-start gap-2">
+                                                <span className="material-symbols-outlined text-sm pt-0.5">info</span>
+                                                <p>Este bloqueio impedirá novos agendamentos no horário selecionado. É útil para pausas, férias ou manutenções.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <PatientSelector
+                                    onSelect={handlePatientSelect}
+                                    initialData={selectedPatient}
+                                />
+                            )
                         )}
 
                         {currentStep === 2 && (
