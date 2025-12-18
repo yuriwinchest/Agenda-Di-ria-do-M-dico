@@ -387,12 +387,13 @@ const CalendarView: React.FC = () => {
                     {getVisibleDates().map((date, i) => {
                         const isToday = date.toDateString() === new Date().toDateString();
                         const isSelected = selectedDay?.toDateString() === date.toDateString();
+                        const appointmentCount = getAppointmentsForDay(date).length;
                         return (
                             <button
                                 key={i}
                                 onClick={() => handleDayClick(date)}
                                 className={cn(
-                                    "p-3 text-center border-r border-slate-200 last:border-r-0 transition-all hover:bg-blue-50 cursor-pointer",
+                                    "p-3 text-center border-r border-slate-200 last:border-r-0 transition-all hover:bg-blue-50 cursor-pointer flex flex-col items-center",
                                     isToday && 'bg-blue-50/50',
                                     isSelected && 'bg-blue-100 ring-2 ring-blue-500 ring-inset',
                                     getVisibleDates().length === 1 && "col-span-7"
@@ -400,6 +401,9 @@ const CalendarView: React.FC = () => {
                             >
                                 <p className={cn("text-xs font-semibold uppercase", isToday || isSelected ? 'text-blue-600' : 'text-slate-500')}>{days[date.getDay()]}</p>
                                 <p className={cn("text-lg font-bold mt-1", isToday || isSelected ? 'text-blue-600' : 'text-slate-800')}>{date.getDate()}</p>
+                                <span className={cn("text-[10px] font-medium mt-1 px-2 py-0.5 rounded-full", isToday || isSelected ? 'bg-blue-200 text-blue-700' : 'bg-slate-100 text-slate-500')}>
+                                    {appointmentCount} consultas
+                                </span>
                             </button>
                         );
                     })}
