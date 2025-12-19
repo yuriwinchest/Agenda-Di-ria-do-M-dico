@@ -190,7 +190,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 {/* RIGHT SIDE: PHOTO CAROUSEL SIDE */}
                 <div className="hidden lg:flex w-1/2 relative bg-slate-900 overflow-hidden items-end">
 
-                    {/* Carousel Images - Smooth Transition */}
                     <div className="absolute inset-0 w-full h-full">
                         {heroImages.map((img, idx) => (
                             <img
@@ -198,19 +197,19 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                                 src={img}
                                 alt={`Hero ${idx + 1}`}
                                 className={cn(
-                                    "absolute inset-0 w-full h-full object-cover transition-all duration-[2000ms] ease-in-out",
-                                    activeHero === idx ? "opacity-100 scale-100" : "opacity-0 scale-110"
+                                    "absolute inset-0 w-full h-full object-cover object-top transition-all duration-[2000ms] ease-in-out",
+                                    activeHero === idx ? "opacity-100 scale-100" : "opacity-0 scale-105"
                                 )}
                             />
                         ))}
                     </div>
 
                     {/* Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent z-10" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-transparent z-10" />
 
-                    {/* LOW-POSITIONED CARD (Doesn't cover faces) */}
-                    <div className="relative w-full z-20 p-12 px-16">
-                        <div className="bg-white/5 backdrop-blur-2xl rounded-[40px] border border-white/10 shadow-2xl p-8 transition-all hover:bg-white/10 group/card">
+                    {/* LOW-POSITIONED CARD - MAXIMUM VERTICAL SPACE */}
+                    <div className="relative w-full z-20 p-8 px-12 pb-10">
+                        <div className="bg-white/5 backdrop-blur-3xl rounded-[32px] border border-white/10 shadow-2xl p-6 transition-all hover:bg-white/10 group/card">
                             <div className="flex items-center gap-3 mb-4">
                                 <Activity className="w-5 h-5 text-blue-500 animate-pulse" />
                                 <span className="text-[10px] font-black text-white/50 uppercase tracking-[0.4em]">Performance de Gestão</span>
