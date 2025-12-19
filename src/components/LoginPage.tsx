@@ -64,24 +64,24 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 ))}
 
                 {/* Global Comet */}
-                <div className="absolute top-0 left-0 w-80 h-[1px] bg-gradient-to-r from-transparent via-blue-400 to-white animate-comet blur-[1px] opacity-70 pointer-events-none" />
+                <div className="absolute top-0 left-0 w-80 h-[1px] bg-gradient-to-r from-transparent via-blue-400 to-white animate-comet opacity-70 pointer-events-none" />
 
                 {/* 🌏 GLOBAL REALISTIC PLANETS (Moving across entire screen) */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <img
                         src={planetEarth}
                         alt="Earth"
-                        className="absolute w-80 h-80 object-contain animate-planet-1 mix-blend-screen rounded-full"
+                        className="absolute w-80 h-80 object-contain animate-planet-1 mix-blend-screen rounded-full sharp-planet shadow-2xl shadow-blue-500/10"
                     />
                     <img
                         src={planetMars}
                         alt="Mars"
-                        className="absolute w-40 h-40 object-contain animate-planet-2 mix-blend-screen rounded-full"
+                        className="absolute w-40 h-40 object-contain animate-planet-2 mix-blend-screen rounded-full sharp-planet shadow-xl shadow-orange-500/10"
                     />
                     <img
                         src={planetSaturn}
                         alt="Saturn"
-                        className="absolute w-[500px] h-[500px] object-contain animate-planet-3 mix-blend-screen"
+                        className="absolute w-[500px] h-[500px] object-contain animate-planet-3 mix-blend-screen sharp-planet shadow-2xl shadow-amber-500/10"
                     />
                 </div>
             </div>

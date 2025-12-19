@@ -57,7 +57,7 @@
     }
 
     50% {
-      transform: translate(20vw, 10vh) rotate(180deg) scale(1.1);
+      transform: translate(20vw, 10vh) rotate(180deg) scale(1);
       opacity: 1;
     }
 
@@ -159,5 +159,11 @@
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #cbd5e1;
+  }
+
+  .sharp-planet {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    filter: contrast(1.1) brightness(1.1);
   }
 }
