@@ -58,6 +58,15 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     return (
         <div className="min-h-screen w-full relative overflow-hidden font-sans bg-slate-950 sharp-universe">
 
+            {/* 🏗️ CONSTRUCTION BANNER */}
+            <div className="fixed top-0 left-0 right-0 z-[100] bg-amber-600/10 backdrop-blur-md border-b border-white/5 py-4 px-4 flex items-center justify-center gap-4 group hover:bg-amber-600/20 transition-all cursor-default">
+                <AlertCircle className="w-5 h-5 text-amber-500 animate-pulse group-hover:scale-110 transition-transform" />
+                <p className="text-white text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-center drop-shadow-sm">
+                    Estamos em construção. Algumas funcionalidades podem não estar funcionando.
+                </p>
+                <AlertCircle className="w-5 h-5 text-amber-500 animate-pulse group-hover:scale-110 transition-transform hidden sm:block" />
+            </div>
+
             {/* 🌌 GLOBAL SPACE BACKGROUND LAYER - Fixed Sharpness */}
             <div className="fixed inset-0 z-0 pixel-perfect">
                 <img src={spaceBg} alt="Space" className="w-full h-full object-cover opacity-20" />
