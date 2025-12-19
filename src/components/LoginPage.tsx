@@ -16,9 +16,11 @@ import spaceBg from '../assets/space_bg.png';
 import planetEarth from '../assets/planet_earth.png';
 import planetMars from '../assets/planet_mars.png';
 import planetSaturn from '../assets/planet_saturn.png';
-import hero1 from '../assets/hero_1.png';
-import hero2 from '../assets/hero_2.png';
-import hero3 from '../assets/hero_3.png';
+import foto01 from '../assets/foto01.png';
+import foto02 from '../assets/foto02.png';
+import foto03 from '../assets/foto03.png';
+import foto04 from '../assets/foto04.png';
+import foto05 from '../assets/foto05.png';
 
 interface LoginPageProps {
     onLogin: () => void;
@@ -29,12 +31,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     const [password, setPassword] = useState('');
     const [activeHero, setActiveHero] = useState(0);
 
-    const heroImages = [hero1, hero2, hero3];
+    const heroImages = [foto01, foto02, foto03, foto04, foto05];
 
     useEffect(() => {
         const interval = setInterval(() => {
             setActiveHero((prev) => (prev + 1) % heroImages.length);
-        }, 6000);
+        }, 8000);
         return () => clearInterval(interval);
     }, []);
 
@@ -45,7 +47,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         { icon: BarChart3, title: "Gestão Financeira", desc: "Controle de fluxo de caixa e repasses médicos." }
     ];
 
-    const stars = Array.from({ length: 80 }).map((_, i) => ({
+    const stars = Array.from({ length: 60 }).map((_, i) => ({
         id: i,
         top: `${Math.random() * 100}%`,
         left: `${Math.random() * 100}%`,
@@ -56,9 +58,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     return (
         <div className="min-h-screen w-full relative overflow-hidden font-sans bg-slate-950 sharp-universe">
 
-            {/* 🌌 GLOBAL SPACE BACKGROUND LAYER */}
-            <div className="fixed inset-0 z-0">
-                <img src={spaceBg} alt="Space" className="w-full h-full object-cover opacity-30" />
+            {/* 🌌 GLOBAL SPACE BACKGROUND LAYER - Fixed Sharpness */}
+            <div className="fixed inset-0 z-0 pixel-perfect">
+                <img src={spaceBg} alt="Space" className="w-full h-full object-cover opacity-20" />
 
                 {/* Global Stars */}
                 {stars.map(star => (
@@ -75,10 +77,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                     />
                 ))}
 
-                {/* Global Comet - Sharp focus */}
-                <div className="absolute top-0 left-0 w-80 h-[2px] bg-gradient-to-r from-transparent via-blue-300 to-white animate-comet opacity-80 pointer-events-none" />
+                {/* Global Comet - High Contrast & Sharp */}
+                <div className="absolute top-0 left-0 w-96 h-[3px] bg-gradient-to-r from-transparent via-blue-400 to-white animate-comet opacity-100 pointer-events-none" />
 
-                {/* 🌏 GLOBAL REALISTIC PLANETS - HIGH SHARPNESS */}
+                {/* 🌏 GLOBAL REALISTIC PLANETS - ABSOLUTE SHARPNESS */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <img
                         src={planetEarth}
@@ -101,8 +103,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             {/* 🛠️ MAIN CONTENT LAYOUT */}
             <div className="relative z-10 flex flex-col lg:flex-row min-h-screen w-full">
 
-                {/* LEFT SIDE: LOGIN FORM */}
-                <div className="w-full lg:w-1/2 flex flex-col h-screen overflow-y-auto custom-scrollbar bg-slate-950/40 backdrop-blur-sm border-r border-white/5">
+                {/* LEFT SIDE: LOGIN FORM - Removed backdrop-blur to keep planets sharp */}
+                <div className="w-full lg:w-1/2 flex flex-col h-screen overflow-y-auto custom-scrollbar bg-slate-950/20 border-r border-white/5">
                     <div className="max-w-md w-full mx-auto px-8 md:px-12 py-12 lg:py-20 flex flex-col min-h-full">
 
                         {/* Header */}
@@ -121,9 +123,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
                             <div className="space-y-4">
                                 <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight leading-[1] md:leading-[1.1]">
-                                    A tecnologia que <span className="text-blue-500 underline decoration-blue-500/20 underline-offset-8">orbita</span> sua clínica.
+                                    O sistema que <span className="text-blue-500 underline decoration-blue-500/20 underline-offset-8">orbita</span> seu sucesso.
                                 </h2>
-                                <p className="text-slate-300 font-bold text-lg opacity-80 italic">O futuro da medicina digital acessível hoje.</p>
+                                <p className="text-slate-300 font-bold text-lg opacity-80 italic">A recepção do futuro, hoje.</p>
                             </div>
                         </div>
 
@@ -132,7 +134,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                             {features.map((f, i) => {
                                 const Icon = f.icon;
                                 return (
-                                    <div key={i} className="p-4 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-500 backdrop-blur-md group">
+                                    <div key={i} className="p-4 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-500 backdrop-blur-sm group">
                                         <Icon className="w-5 h-5 text-blue-400 mb-2 group-hover:scale-110 transition-transform" />
                                         <h4 className="text-[11px] font-black uppercase tracking-wider text-white mb-1">{f.title}</h4>
                                         <p className="text-[10px] text-slate-400 font-bold leading-tight">{f.desc}</p>
@@ -146,7 +148,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                             <div className="space-y-4">
                                 <input
                                     type="email"
-                                    placeholder="E-mail profissional"
+                                    placeholder="E-mail de acesso"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     className="w-full bg-white/5 border border-white/10 rounded-[24px] py-5 pl-8 pr-6 text-sm font-bold outline-none focus:bg-white/10 focus:border-blue-500 transition-all placeholder:text-slate-500 text-white shadow-inner"
@@ -164,80 +166,85 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                                 onClick={onLogin}
                                 className="w-full h-16 bg-blue-600 text-white rounded-[24px] font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-4 hover:bg-blue-500 transition-all shadow-2xl shadow-blue-900/40 active:scale-[0.98] group relative overflow-hidden mt-4"
                             >
-                                <span className="relative z-10">Iniciar Acesso Estelar</span>
+                                <span className="relative z-10">Entrar no Sistema</span>
                                 <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform relative z-10" />
                             </button>
 
                             <div className="flex items-center justify-between px-2 pt-4">
-                                <button className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] hover:text-white transition-colors">Recuperar credenciais</button>
+                                <button className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] hover:text-white transition-colors">Esqueci a senha</button>
                                 <div className="w-1 h-1 rounded-full bg-white/10" />
                                 <div className="flex items-center gap-2">
                                     <Globe className="w-3.5 h-3.5 text-slate-500" />
-                                    <button className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] hover:text-white transition-colors">Português (BR)</button>
+                                    <button className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] hover:text-white transition-colors">Brasil</button>
                                 </div>
                             </div>
                         </div>
 
                         {/* Note */}
                         <div className="mt-12 text-center">
-                            <p className="text-[10px] text-slate-700 font-bold uppercase tracking-[0.5em]">IntegraClinic Intelligence Systems</p>
+                            <p className="text-[10px] text-slate-700 font-bold uppercase tracking-[0.5em]">IntegraClinic Intelligence</p>
                         </div>
                     </div>
                 </div>
 
                 {/* RIGHT SIDE: PHOTO CAROUSEL SIDE */}
-                <div className="hidden lg:flex w-1/2 relative bg-slate-900 overflow-hidden items-end p-12">
-                    {/* Carousel Images */}
-                    {heroImages.map((img, idx) => (
-                        <img
-                            key={idx}
-                            src={img}
-                            alt={`Hero ${idx + 1}`}
-                            className={cn(
-                                "absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out",
-                                activeHero === idx ? "opacity-90 grayscale-[0.2]" : "opacity-0"
-                            )}
-                        />
-                    ))}
+                <div className="hidden lg:flex w-1/2 relative bg-slate-900 overflow-hidden items-end">
 
-                    {/* Subtle Gradient */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80" />
+                    {/* Carousel Images - Smooth Transition */}
+                    <div className="absolute inset-0 w-full h-full">
+                        {heroImages.map((img, idx) => (
+                            <img
+                                key={idx}
+                                src={img}
+                                alt={`Hero ${idx + 1}`}
+                                className={cn(
+                                    "absolute inset-0 w-full h-full object-cover transition-all duration-[2000ms] ease-in-out",
+                                    activeHero === idx ? "opacity-100 scale-100" : "opacity-0 scale-110"
+                                )}
+                            />
+                        ))}
+                    </div>
 
-                    {/* FULLY TRANSPARENT GLASS OVERLAY */}
-                    <div className="relative w-full p-10 bg-white/5 backdrop-blur-3xl rounded-[48px] border border-white/10 shadow-2xl transition-all hover:bg-white/10 group/card">
-                        <div className="flex items-center gap-3 mb-6">
-                            <Activity className="w-5 h-5 text-blue-500 animate-pulse" />
-                            <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.5em]">Liderança Médica</span>
-                        </div>
+                    {/* Gradient Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent z-10" />
 
-                        <h3 className="text-5xl font-black text-white leading-[1] tracking-tighter mb-8 opacity-90 group-hover/card:opacity-100 transition-opacity drop-shadow-lg">
-                            Performance e <br /> <span className="text-blue-500">evolução</span> <br /> para sua clínica.
-                        </h3>
-
-                        <div className="grid grid-cols-3 gap-6 opacity-60 group-hover/card:opacity-100 transition-all">
-                            <div>
-                                <p className="text-3xl font-black text-white tracking-tighter">99.9%</p>
-                                <p className="text-[10px] font-black text-white/50 uppercase tracking-widest mt-1">Uptime</p>
+                    {/* LOW-POSITIONED CARD (Doesn't cover faces) */}
+                    <div className="relative w-full z-20 p-12 px-16">
+                        <div className="bg-white/5 backdrop-blur-2xl rounded-[40px] border border-white/10 shadow-2xl p-8 transition-all hover:bg-white/10 group/card">
+                            <div className="flex items-center gap-3 mb-4">
+                                <Activity className="w-5 h-5 text-blue-500 animate-pulse" />
+                                <span className="text-[10px] font-black text-white/50 uppercase tracking-[0.4em]">Performance de Gestão</span>
                             </div>
-                            <div className="border-l border-white/20 pl-6">
-                                <p className="text-3xl font-black text-white tracking-tighter">SSL+</p>
-                                <p className="text-[10px] font-black text-white/50 uppercase tracking-widest mt-1">Seguro</p>
-                            </div>
-                            <div className="border-l border-white/20 pl-6">
-                                <p className="text-3xl font-black text-white tracking-tighter">TUSS</p>
-                                <p className="text-[10px] font-black text-white/50 uppercase tracking-widest mt-1">Consol.</p>
+
+                            <h3 className="text-4xl font-black text-white leading-tight tracking-tighter mb-8 opacity-95 group-hover/card:opacity-100 transition-opacity">
+                                Performance e <span className="text-blue-500">evolução</span> <br /> para o seu negócio.
+                            </h3>
+
+                            <div className="grid grid-cols-3 gap-8 opacity-70 group-hover/card:opacity-100 transition-all">
+                                <div className="space-y-1">
+                                    <p className="text-3xl font-black text-white tracking-tighter">99.9%</p>
+                                    <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Uptime</p>
+                                </div>
+                                <div className="space-y-1 border-l border-white/10 pl-8">
+                                    <p className="text-3xl font-black text-white tracking-tighter">SSL+</p>
+                                    <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Seguro</p>
+                                </div>
+                                <div className="space-y-1 border-l border-white/10 pl-8">
+                                    <p className="text-3xl font-black text-white tracking-tighter">TUSS</p>
+                                    <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Integrado</p>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Carousel Indicators */}
-                    <div className="absolute top-10 right-10 flex gap-2">
+                    {/* Indicators at the top-right */}
+                    <div className="absolute top-10 right-10 flex gap-1.5 z-30">
                         {heroImages.map((_, idx) => (
                             <div
                                 key={idx}
                                 className={cn(
-                                    "w-12 h-1 rounded-full transition-all duration-500",
-                                    activeHero === idx ? "bg-blue-500" : "bg-white/20"
+                                    "h-1 rounded-full transition-all duration-700",
+                                    activeHero === idx ? "w-8 bg-blue-500" : "w-2 bg-white/20"
                                 )}
                             />
                         ))}

@@ -45,10 +45,10 @@
     animation: star-twinkle 3s ease-in-out infinite;
   }
 
-  /* Global Wide Orbits */
+  /* Global Wide Orbits - Fixed scaling to maintain sharpness */
   @keyframes planet-orbit-wide {
     0% {
-      transform: translate(-150vw, -20vh) rotate(0deg) scale(0.6);
+      transform: translate(-150vw, -20vh) rotate(0deg) scale(0.8);
       opacity: 0;
     }
 
@@ -66,14 +66,14 @@
     }
 
     100% {
-      transform: translate(150vw, 40vh) rotate(360deg) scale(0.6);
+      transform: translate(150vw, 40vh) rotate(360deg) scale(0.8);
       opacity: 0;
     }
   }
 
   @keyframes planet-orbit-alt {
     0% {
-      transform: translate(150vw, 80vh) rotate(0deg) scale(0.8);
+      transform: translate(150vw, 80vh) rotate(0deg) scale(0.9);
       opacity: 0;
     }
 
@@ -91,7 +91,7 @@
     }
 
     100% {
-      transform: translate(-150vw, -10vh) rotate(-360deg) scale(0.8);
+      transform: translate(-150vw, -10vh) rotate(-360deg) scale(0.9);
       opacity: 0;
     }
   }
@@ -161,7 +161,7 @@
     background: #cbd5e1;
   }
 
-  /* SHARPNESS FIX FOR PLANETS AND COMETS */
+  /* ULTRA SHARPNESS UTILITY */
   .sharp-universe {
     image-rendering: -webkit-optimize-contrast;
     image-rendering: crisp-edges;
@@ -169,10 +169,19 @@
     -webkit-font-smoothing: antialiased;
     transform: translateZ(0);
     backface-visibility: hidden;
-    filter: contrast(1.1) brightness(1.1);
   }
 
   .sharp-universe img {
-    image-rendering: inherit;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+    filter: none !important;
+    /* Force remove any inherited blur */
+  }
+
+  /* Fixed blur artifacts on fixed layers */
+  .pixel-perfect {
+    image-rendering: pixelated;
+    transform: translate3d(0, 0, 0);
   }
 }
