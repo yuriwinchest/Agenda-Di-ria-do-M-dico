@@ -66,6 +66,7 @@ const App: React.FC = () => {
         onNavigate={handleNavigate}
         isCollapsed={isSidebarCollapsed}
         toggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        onLogout={() => setIsAuthenticated(false)}
       />
 
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">

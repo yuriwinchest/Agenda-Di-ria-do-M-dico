@@ -16,7 +16,8 @@ import {
     HelpCircle,
     Search,
     Menu,
-    PlusCircle
+    PlusCircle,
+    LogOut
 } from 'lucide-react';
 import logoImg from '../assets/logo_integraclinic.png';
 
@@ -25,9 +26,10 @@ interface SidebarProps {
     onNavigate: (view: ViewType) => void;
     isCollapsed: boolean;
     toggleCollapse: () => void;
+    onLogout: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate, isCollapsed, toggleCollapse }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate, isCollapsed, toggleCollapse, onLogout }) => {
     const menuItems = [
         { id: 'dashboard' as ViewType, icon: LayoutDashboard, label: 'Dashboard', color: 'text-blue-500', bg: 'bg-blue-50' },
         { id: 'calendar' as ViewType, icon: Calendar, label: 'Agenda', color: 'text-indigo-500', bg: 'bg-indigo-50' },
@@ -160,9 +162,27 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate, isCollapsed,
                     )}
 
                     {!isCollapsed && (
-                        <Settings className="w-4 h-4 text-slate-300 group-hover:text-blue-500 transition-colors" />
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onLogout();
+                            }}
+                            className="p-2 hover:bg-rose-50 rounded-lg group/logout transition-colors"
+                            title="Sair do Sistema"
+                        >
+                            <LogOut className="w-4 h-4 text-slate-300 group-hover/logout:text-rose-500 transition-colors" />
+                        </button>
                     )}
                 </div>
+                {isCollapsed && (
+                    <button
+                        onClick={onLogout}
+                        className="mt-2 w-10 h-10 flex items-center justify-center hover:bg-rose-50 rounded-xl transition-colors text-slate-400 hover:text-rose-500"
+                        title="Sair"
+                    >
+                        <LogOut className="w-5 h-5" />
+                    </button>
+                )}
             </div>
         </aside>
     );

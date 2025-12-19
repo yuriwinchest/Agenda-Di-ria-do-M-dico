@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Mail,
     Lock,
@@ -12,11 +12,13 @@ import {
     Globe
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import loginHero from '../assets/login_hero.png';
 import spaceBg from '../assets/space_bg.png';
 import planetEarth from '../assets/planet_earth.png';
 import planetMars from '../assets/planet_mars.png';
 import planetSaturn from '../assets/planet_saturn.png';
+import hero1 from '../assets/hero_1.png';
+import hero2 from '../assets/hero_2.png';
+import hero3 from '../assets/hero_3.png';
 
 interface LoginPageProps {
     onLogin: () => void;
@@ -25,6 +27,16 @@ interface LoginPageProps {
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [activeHero, setActiveHero] = useState(0);
+
+    const heroImages = [hero1, hero2, hero3];
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setActiveHero((prev) => (prev + 1) % heroImages.length);
+        }, 6000);
+        return () => clearInterval(interval);
+    }, []);
 
     const features = [
         { icon: Zap, title: "Agenda Inteligente", desc: "Gestão de horários com drag-and-drop intuitivo." },
@@ -33,7 +45,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         { icon: BarChart3, title: "Gestão Financeira", desc: "Controle de fluxo de caixa e repasses médicos." }
     ];
 
-    const stars = Array.from({ length: 100 }).map((_, i) => ({
+    const stars = Array.from({ length: 80 }).map((_, i) => ({
         id: i,
         top: `${Math.random() * 100}%`,
         left: `${Math.random() * 100}%`,
@@ -42,9 +54,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     }));
 
     return (
-        <div className="min-h-screen w-full relative overflow-hidden font-sans bg-slate-950">
+        <div className="min-h-screen w-full relative overflow-hidden font-sans bg-slate-950 sharp-universe">
 
-            {/* 🌌 GLOBAL SPACE BACKGROUND LAYER (Covers both sides) */}
+            {/* 🌌 GLOBAL SPACE BACKGROUND LAYER */}
             <div className="fixed inset-0 z-0">
                 <img src={spaceBg} alt="Space" className="w-full h-full object-cover opacity-30" />
 
@@ -63,25 +75,25 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                     />
                 ))}
 
-                {/* Global Comet */}
-                <div className="absolute top-0 left-0 w-80 h-[1px] bg-gradient-to-r from-transparent via-blue-400 to-white animate-comet opacity-70 pointer-events-none" />
+                {/* Global Comet - Sharp focus */}
+                <div className="absolute top-0 left-0 w-80 h-[2px] bg-gradient-to-r from-transparent via-blue-300 to-white animate-comet opacity-80 pointer-events-none" />
 
-                {/* 🌏 GLOBAL REALISTIC PLANETS (Moving across entire screen) */}
+                {/* 🌏 GLOBAL REALISTIC PLANETS - HIGH SHARPNESS */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <img
                         src={planetEarth}
                         alt="Earth"
-                        className="absolute w-80 h-80 object-contain animate-planet-1 mix-blend-screen rounded-full sharp-planet shadow-2xl shadow-blue-500/10"
+                        className="absolute w-80 h-80 object-contain animate-planet-1 mix-blend-screen rounded-full"
                     />
                     <img
                         src={planetMars}
                         alt="Mars"
-                        className="absolute w-40 h-40 object-contain animate-planet-2 mix-blend-screen rounded-full sharp-planet shadow-xl shadow-orange-500/10"
+                        className="absolute w-40 h-40 object-contain animate-planet-2 mix-blend-screen rounded-full"
                     />
                     <img
                         src={planetSaturn}
                         alt="Saturn"
-                        className="absolute w-[500px] h-[500px] object-contain animate-planet-3 mix-blend-screen sharp-planet shadow-2xl shadow-amber-500/10"
+                        className="absolute w-[500px] h-[500px] object-contain animate-planet-3 mix-blend-screen"
                     />
                 </div>
             </div>
@@ -173,38 +185,62 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                     </div>
                 </div>
 
-                {/* RIGHT SIDE: PHOTO SIDE (With Global Particles passing through) */}
+                {/* RIGHT SIDE: PHOTO CAROUSEL SIDE */}
                 <div className="hidden lg:flex w-1/2 relative bg-slate-900 overflow-hidden items-end p-12">
-                    {/* Background Hero Image */}
-                    <img
-                        src={loginHero}
-                        alt="Doctors"
-                        className="absolute inset-0 w-full h-full object-cover opacity-90 transition-transform duration-[30s] hover:scale-105"
-                    />
+                    {/* Carousel Images */}
+                    {heroImages.map((img, idx) => (
+                        <img
+                            key={idx}
+                            src={img}
+                            alt={`Hero ${idx + 1}`}
+                            className={cn(
+                                "absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out",
+                                activeHero === idx ? "opacity-90 grayscale-[0.2]" : "opacity-0"
+                            )}
+                        />
+                    ))}
 
-                    {/* Subtle Gradient to improve visibility of bottom text */}
+                    {/* Subtle Gradient */}
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80" />
 
-                    {/* FULLY TRANSPARENT GLASS OVERLAY (Shifted Lower) */}
+                    {/* FULLY TRANSPARENT GLASS OVERLAY */}
                     <div className="relative w-full p-10 bg-white/5 backdrop-blur-3xl rounded-[48px] border border-white/10 shadow-2xl transition-all hover:bg-white/10 group/card">
-                        <h3 className="text-5xl font-black text-white leading-[1] tracking-tighter mb-10 opacity-90 group-hover/card:opacity-100 transition-opacity drop-shadow-2xl">
-                            A evolução <br /> está no seu <br /> <span className="text-blue-500">consultório.</span>
+                        <div className="flex items-center gap-3 mb-6">
+                            <Activity className="w-5 h-5 text-blue-500 animate-pulse" />
+                            <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.5em]">Liderança Médica</span>
+                        </div>
+
+                        <h3 className="text-5xl font-black text-white leading-[1] tracking-tighter mb-8 opacity-90 group-hover/card:opacity-100 transition-opacity drop-shadow-lg">
+                            Performance e <br /> <span className="text-blue-500">evolução</span> <br /> para sua clínica.
                         </h3>
 
                         <div className="grid grid-cols-3 gap-6 opacity-60 group-hover/card:opacity-100 transition-all">
                             <div>
                                 <p className="text-3xl font-black text-white tracking-tighter">99.9%</p>
-                                <p className="text-[10px] font-black text-white/50 uppercase tracking-widest mt-1">Disponibilidade</p>
+                                <p className="text-[10px] font-black text-white/50 uppercase tracking-widest mt-1">Uptime</p>
                             </div>
                             <div className="border-l border-white/20 pl-6">
                                 <p className="text-3xl font-black text-white tracking-tighter">SSL+</p>
-                                <p className="text-[10px] font-black text-white/50 uppercase tracking-widest mt-1">Criptografia</p>
+                                <p className="text-[10px] font-black text-white/50 uppercase tracking-widest mt-1">Seguro</p>
                             </div>
                             <div className="border-l border-white/20 pl-6">
                                 <p className="text-3xl font-black text-white tracking-tighter">TUSS</p>
-                                <p className="text-[10px] font-black text-white/50 uppercase tracking-widest mt-1">Consolidado</p>
+                                <p className="text-[10px] font-black text-white/50 uppercase tracking-widest mt-1">Consol.</p>
                             </div>
                         </div>
+                    </div>
+
+                    {/* Carousel Indicators */}
+                    <div className="absolute top-10 right-10 flex gap-2">
+                        {heroImages.map((_, idx) => (
+                            <div
+                                key={idx}
+                                className={cn(
+                                    "w-12 h-1 rounded-full transition-all duration-500",
+                                    activeHero === idx ? "bg-blue-500" : "bg-white/20"
+                                )}
+                            />
+                        ))}
                     </div>
                 </div>
             </div>

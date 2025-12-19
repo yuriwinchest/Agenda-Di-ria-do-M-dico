@@ -161,9 +161,18 @@
     background: #cbd5e1;
   }
 
-  .sharp-planet {
+  /* SHARPNESS FIX FOR PLANETS AND COMETS */
+  .sharp-universe {
     image-rendering: -webkit-optimize-contrast;
     image-rendering: crisp-edges;
+    image-rendering: pixelated;
+    -webkit-font-smoothing: antialiased;
+    transform: translateZ(0);
+    backface-visibility: hidden;
     filter: contrast(1.1) brightness(1.1);
+  }
+
+  .sharp-universe img {
+    image-rendering: inherit;
   }
 }
