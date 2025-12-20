@@ -171,7 +171,7 @@ const FinanceView: React.FC = () => {
             ) : (
                 <div className="flex flex-col lg:flex-row gap-6 h-full min-h-0">
                     {/* Left Side: Queue List - Fully responsive width and cards */}
-                    <div className="w-full lg:w-96 flex flex-col gap-4 shrink-0 h-full">
+                    <div className="w-full lg:w-96 flex flex-col gap-4 shrink-0 h-[400px] lg:h-full">
                         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex-1 flex flex-col overflow-hidden">
                             <div className="flex items-center justify-between mb-4 px-1">
                                 <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Fila de Faturamento</h2>
@@ -238,7 +238,7 @@ const FinanceView: React.FC = () => {
                     </div>
 
                     {/* Right Side: Detail Panel - Responsive elements */}
-                    <div className="flex-1 flex flex-col gap-6 overflow-y-auto lg:overflow-visible pb-10 custom-scrollbar pr-1">
+                    <div className="flex-1 flex flex-col gap-6 overflow-y-auto pb-10 custom-scrollbar pr-1">
                         {selectedPatientInfo ? (
                             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 {/* Patient Summary Card */}
