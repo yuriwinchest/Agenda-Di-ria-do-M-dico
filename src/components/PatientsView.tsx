@@ -54,6 +54,11 @@ const PatientsView: React.FC<PatientsViewProps> = ({ onNavigate }) => {
                 setEditingPatient(null);
                 fetchPatients();
             }}
+            onSaveSuccess={(patient) => {
+                setIsRegistering(false);
+                setEditingPatient(null);
+                onNavigate?.('calendar', patient);
+            }}
         />;
     }
 
