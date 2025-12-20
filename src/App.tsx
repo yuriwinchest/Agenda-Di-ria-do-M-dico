@@ -10,6 +10,7 @@ import FinanceView from './components/FinanceView';
 import ReportsView from './components/ReportsView';
 import ProceduresView from './components/ProceduresView';
 import LoginPage from './components/LoginPage';
+import InsuranceManagement from './components/InsuranceManagement';
 import { ViewType } from './types';
 
 const App: React.FC = () => {
@@ -26,7 +27,7 @@ const App: React.FC = () => {
   const renderView = () => {
     switch (currentView) {
       case 'dashboard':
-        return <DashboardView />;
+        return <DashboardView onNavigate={handleNavigateWithData} />;
       case 'patients':
         return <PatientsView onNavigate={handleNavigateWithData} />;
       case 'records':
@@ -41,6 +42,8 @@ const App: React.FC = () => {
         return <ProceduresView />;
       case 'reports':
         return <ReportsView />;
+      case 'insurances':
+        return <InsuranceManagement />;
       default:
         return <DashboardView />;
     }

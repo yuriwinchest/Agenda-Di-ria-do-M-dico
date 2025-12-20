@@ -17,7 +17,9 @@ import {
     Search,
     Menu,
     PlusCircle,
-    LogOut
+    LogOut,
+    Video,
+    ShieldCheck
 } from 'lucide-react';
 import logoImg from '../assets/logo_integraclinic.png';
 
@@ -32,11 +34,12 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate, isCollapsed, toggleCollapse, onLogout }) => {
     const menuItems = [
         { id: 'dashboard' as ViewType, icon: LayoutDashboard, label: 'Dashboard', color: 'text-blue-500', bg: 'bg-blue-50' },
+        { id: 'teleconsultation' as ViewType, icon: Video, label: 'Telemedicina', color: 'text-purple-500', bg: 'bg-purple-50' },
         { id: 'calendar' as ViewType, icon: Calendar, label: 'Agenda', color: 'text-indigo-500', bg: 'bg-indigo-50' },
         { id: 'patients' as ViewType, icon: Users, label: 'Pacientes', color: 'text-emerald-500', bg: 'bg-emerald-50' },
         { id: 'records' as ViewType, icon: ClipboardList, label: 'Prontuário', color: 'text-amber-500', bg: 'bg-amber-50' },
-        { id: 'doctors' as ViewType, icon: Stethoscope, label: 'Médicos', color: 'text-rose-500', bg: 'bg-rose-50' },
         { id: 'finance' as ViewType, icon: CreditCard, label: 'Financeiro', color: 'text-violet-500', bg: 'bg-violet-50' },
+        { id: 'insurances' as ViewType, icon: ShieldCheck, label: 'Convênios', color: 'text-blue-600', bg: 'bg-blue-50' },
         { id: 'procedures' as ViewType, icon: Search, label: 'Procedimentos', color: 'text-cyan-500', bg: 'bg-cyan-50' },
         { id: 'reports' as ViewType, icon: BarChart3, label: 'Relatórios', color: 'text-orange-500', bg: 'bg-orange-50' },
         { id: 'settings' as ViewType, icon: Settings, label: 'Ajustes', color: 'text-slate-500', bg: 'bg-slate-50' },

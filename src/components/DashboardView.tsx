@@ -8,11 +8,18 @@ import {
     Plus,
     Sparkles,
     RefreshCcw,
-    LayoutDashboard
+    LayoutDashboard,
+    Video
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+// @ts-ignore
+import { ViewType } from '../types';
 
-const DashboardView: React.FC = () => {
+interface DashboardViewProps {
+    onNavigate?: (view: any) => void;
+}
+
+const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
     return (
         <div className="flex flex-col gap-6 h-full animate-in fade-in duration-1000">
             {/* Heading Area */}
@@ -37,8 +44,12 @@ const DashboardView: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <button className="group flex items-center justify-center w-11 h-11 bg-white border border-slate-200 text-slate-400 rounded-2xl hover:bg-slate-50 hover:text-slate-600 transition-all hover:rotate-180 duration-500 shadow-sm active:scale-95">
-                        <RefreshCcw className="w-5 h-5" />
+                    <button
+                        onClick={() => onNavigate?.('teleconsultation')}
+                        className="flex items-center gap-2.5 px-6 h-11 bg-purple-600 text-white font-black text-xs uppercase tracking-[0.1em] rounded-2xl hover:bg-purple-700 transition-all shadow-lg shadow-purple-200 active:scale-95 group"
+                    >
+                        <Video className="w-4 h-4 group-hover:scale-110 transition-transform" strokeWidth={3} />
+                        Telemedicina
                     </button>
                     <button className="flex items-center gap-2.5 px-5 h-11 bg-white border border-slate-200 text-slate-700 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-slate-50 transition-all shadow-sm active:scale-95">
                         <Filter className="w-4 h-4 text-slate-400" />
