@@ -47,17 +47,32 @@ const TeleconsultationView: React.FC = () => {
 
     // Callback ref to handle video element mounting and stream binding
     const setVideoRef = (node: HTMLVideoElement | null) => {
-        if (node && localStream && !isVideoOff) {
-            node.srcObject = localStream;
-            node.play().catch(e => console.warn("Auto-play blocked:", e));
+        if (node) {
+            localVideoRef.current = node;
+            if (localStream && !isVideoOff) {
+                node.srcObject = localStream;
+                node.play().catch(e => console.warn("Auto-play blocked:", e));
+            }
         }
     };
+
+    // Keep stream in sync with video element
+    useEffect(() => {
+        if (localVideoRef.current) {
+            if (localStream && !isVideoOff) {
+                localVideoRef.current.srcObject = localStream;
+                localVideoRef.current.play().catch(e => console.warn("Auto-play sync blocked:", e));
+            } else {
+                localVideoRef.current.srcObject = null;
+            }
+        }
+    }, [localStream, isVideoOff]);
 
     const startCamera = async () => {
         console.log("Iniciando acesso aos dispositivos...");
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
-                video: { width: { ideal: 1280 }, height: { ideal: 720 } },
+                video: true,
                 audio: true
             }).catch(async (err) => {
                 console.warn("Falha ao abrir vídeo + áudio, tentando apenas vídeo...", err);
@@ -240,8 +255,8 @@ const TeleconsultationView: React.FC = () => {
                             </div>
                         )}
 
-                        {/* Stage Controls - Centered Bottom */}
-                        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 px-6 py-4 bg-slate-900/90 backdrop-blur-2xl border border-white/5 rounded-[32px] shadow-2xl">
+                        {/* Stage Controls - Floating Bottom Left */}
+                        <div className="absolute bottom-8 left-8 z-50 flex items-center gap-4 px-6 py-4 bg-slate-900/95 backdrop-blur-3xl border border-white/10 rounded-[28px] shadow-2xl ring-1 ring-white/5">
                             <button
                                 onClick={() => setIsMuted(!isMuted)}
                                 className={cn(
@@ -269,9 +284,10 @@ const TeleconsultationView: React.FC = () => {
                             {!localStream && (
                                 <button
                                     onClick={startCamera}
-                                    className="px-6 py-3 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 transition-all shadow-xl shadow-blue-900/40 animate-pulse whitespace-nowrap"
+                                    className="px-6 py-3 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/20 animate-pulse whitespace-nowrap flex items-center gap-2"
                                 >
-                                    Abrir Minha Câmera
+                                    <VideoIcon className="w-4 h-4" />
+                                    Ativar Câmera
                                 </button>
                             )}
                             <button className="w-12 h-12 rounded-2xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center hidden sm:flex">
