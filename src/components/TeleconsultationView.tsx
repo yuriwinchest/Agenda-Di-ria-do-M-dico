@@ -15,7 +15,9 @@ import {
     Search,
     CheckCircle2,
     Copy,
-    ExternalLink
+    ExternalLink,
+    Clock,
+    User
 } from 'lucide-react';
 
 const TeleconsultationView: React.FC = () => {
@@ -90,33 +92,31 @@ const TeleconsultationView: React.FC = () => {
     return (
         <div className="flex flex-col h-full bg-slate-50/10 overflow-hidden animate-in fade-in duration-1000">
             {/* Immersive Header */}
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6 px-4 mb-6 shrink-0 pt-2 lg:px-6">
-                <div className="flex items-center gap-6">
-                    <div className="lg:block hidden">
-                        <div className="w-16 h-16 bg-white rounded-3xl border border-slate-100 shadow-xl flex items-center justify-center text-blue-600">
-                            <VideoIcon className="w-8 h-8" />
-                        </div>
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 px-6 mb-4 shrink-0 pt-4">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-white rounded-2xl border border-slate-100 shadow-lg flex items-center justify-center text-blue-600 shrink-0">
+                        <VideoIcon className="w-6 h-6" />
                     </div>
-                    <div>
-                        <h2 className="text-3xl lg:text-4xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Ambiente Winchester</h2>
-                        <div className="flex items-center gap-3 mt-2">
-                            <div className="flex items-center gap-1.5 px-2 py-0.5 bg-blue-50 rounded-full border border-blue-100">
-                                <span className="flex h-2 w-2 relative">
+                    <div className="min-w-0">
+                        <h2 className="text-2xl lg:text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none truncate">Ambiente Winchester</h2>
+                        <div className="flex items-center gap-2 mt-1">
+                            <div className="flex items-center gap-1.5 px-2 py-0.5 bg-blue-50 rounded-full border border-blue-100 shrink-0">
+                                <span className="flex h-1.5 w-1.5 relative">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
+                                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-600"></span>
                                 </span>
-                                <span className="text-[9px] font-bold text-blue-600 uppercase tracking-widest">SERVIDOR ONLINE</span>
+                                <span className="text-[8px] font-bold text-blue-600 uppercase tracking-widest">ONLINE</span>
                             </div>
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">HOSPITAL CENTRAL • CANAL TELEDR-001</span>
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest truncate">HOSPITAL CENTRAL • CANAL TELEDR-001</span>
                         </div>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-4">
-                    <div className="hidden lg:flex flex-col items-end mr-6">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Qualidade Conexão</p>
-                        <p className="text-sm font-black text-emerald-500 flex items-center gap-2 mt-2">
-                            <Activity className="w-4 h-4" />
+                <div className="flex items-center gap-3">
+                    <div className="hidden xl:flex flex-col items-end mr-4">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none text-right">Qualidade de Conexão</p>
+                        <p className="text-xs font-black text-emerald-500 flex items-center gap-2 mt-1 underline underline-offset-4 decoration-emerald-200">
+                            <Activity className="w-3.5 h-3.5" />
                             EXCELENTE
                         </p>
                     </div>
@@ -125,103 +125,103 @@ const TeleconsultationView: React.FC = () => {
                         onClick={copyInviteLink}
                         disabled={!activePatient}
                         className={cn(
-                            "flex items-center gap-3 px-8 h-14 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all shadow-2xl active:scale-95 disabled:grayscale disabled:opacity-50",
+                            "flex items-center gap-2 px-6 h-12 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-xl active:scale-95 disabled:grayscale disabled:opacity-50",
                             copied ? "bg-emerald-500 text-white" : "bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200"
                         )}
                     >
-                        {copied ? <CheckCircle2 className="w-5 h-5" /> : <LinkIcon className="w-5 h-5" />}
-                        {copied ? "Link Copiado" : "Enviar Link para Paciente"}
+                        {copied ? <CheckCircle2 className="w-4 h-4" /> : <LinkIcon className="w-4 h-4" />}
+                        <span className="hidden sm:inline">{copied ? "Link Copiado" : "Enviar Link para Paciente"}</span>
+                        <span className="sm:hidden">{copied ? "Copiado" : "Enviar Link"}</span>
                     </button>
 
-                    <button className="w-14 h-14 bg-white border border-slate-200 rounded-2xl flex items-center justify-center text-slate-400 hover:text-blue-600 transition-all shadow-sm hover:shadow-xl active:scale-90">
-                        <Settings className="w-6 h-6" />
+                    <button className="w-12 h-12 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:text-blue-600 transition-all shadow-sm">
+                        <Settings className="w-5 h-5" />
                     </button>
                 </div>
             </div>
 
             {/* Immersive Stage Area */}
-            <div className="flex-1 flex flex-col lg:flex-row gap-6 p-4 pt-0 lg:px-6 min-h-0 overflow-hidden mb-4">
+            <div className="flex-1 flex flex-col lg:flex-row gap-4 p-4 pt-0 lg:px-6 min-h-0 overflow-hidden mb-2">
                 {/* Left: Video Stage + Medical Notes */}
-                <div className="flex-1 flex flex-col gap-6 min-h-0 min-w-0 h-full">
+                <div className="flex-[1.4] flex flex-col gap-4 min-h-0 min-w-0">
 
                     {/* Main Stage (Video Container) */}
-                    <div className="relative flex-[1.8] bg-slate-950 rounded-[56px] shadow-2xl border border-slate-800 overflow-hidden group min-h-[420px]">
+                    <div className="relative flex-[1.6] bg-slate-950 rounded-[40px] shadow-2xl border border-slate-800 overflow-hidden group min-h-[350px]">
                         {/* Feed Holder */}
                         <div className="absolute inset-0 z-0 bg-slate-900">
                             {activePatient ? (
                                 <>
                                     <img
                                         src={`https://images.unsplash.com/photo-${activePatient.id === '2' ? '1544005313-94ddf0286df2' : '1500648767791-00dcc994a43e'}?auto=format&fit=crop&q=80&w=1400`}
-                                        className="w-full h-full object-cover opacity-70"
+                                        className="w-full h-full object-cover opacity-60"
                                         alt="Paciente Feed"
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
                                 </>
                             ) : (
-                                <div className="w-full h-full flex flex-col items-center justify-center gap-6">
-                                    <div className="w-32 h-32 rounded-full border-2 border-dashed border-slate-800 flex items-center justify-center">
-                                        <VideoOff className="w-12 h-12 text-slate-800" />
+                                <div className="w-full h-full flex flex-col items-center justify-center gap-4">
+                                    <div className="w-24 h-24 rounded-full border border-dashed border-slate-800 flex items-center justify-center">
+                                        <VideoOff className="w-8 h-8 text-slate-800" />
                                     </div>
-                                    <div className="text-center space-y-2">
-                                        <p className="text-slate-700 font-black text-[12px] uppercase tracking-[0.5em]">Aguardando conexão...</p>
-                                        <p className="text-slate-800 text-xs font-bold">Selecione um paciente na fila lateral para iniciar</p>
+                                    <div className="text-center">
+                                        <p className="text-slate-700 font-black text-[10px] uppercase tracking-widest">Aguardando conexão...</p>
                                     </div>
                                 </div>
                             )}
                         </div>
 
-                        {/* Overlays */}
+                        {/* Top Overlay (Patient Info) */}
                         {activePatient && (
-                            <div className="absolute top-10 left-10 z-20 flex items-center gap-5 bg-black/30 backdrop-blur-3xl border border-white/10 p-3 pr-8 rounded-[32px] animate-in fade-in slide-in-from-left-6 duration-700">
-                                <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center font-black text-xl shadow-2xl">
+                            <div className="absolute top-6 left-6 z-20 flex items-center gap-3 bg-black/40 backdrop-blur-xl border border-white/10 p-2 pr-6 rounded-2xl animate-in fade-in slide-in-from-left-4 duration-700">
+                                <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center font-black text-white text-sm">
                                     {activePatient.patient?.name.split(' ').map((n: string) => n[0]).join('')}
                                 </div>
                                 <div className="min-w-0">
-                                    <h3 className="text-white font-black text-lg tracking-tight truncate">{activePatient.patient?.name}</h3>
-                                    <div className="flex items-center gap-2 mt-1">
-                                        <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_12px_rgba(16,185,129,0.8)]"></span>
-                                        <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest">Conexão Criptografada</p>
-                                    </div>
+                                    <h3 className="text-white font-black text-sm tracking-tight truncate">{activePatient.patient?.name}</h3>
+                                    <p className="text-[9px] text-emerald-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
+                                        <span className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse"></span>
+                                        PROTEGIDO
+                                    </p>
                                 </div>
                             </div>
                         )}
 
                         {/* Stage Controls */}
-                        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 flex items-center gap-6 px-10 py-6 bg-slate-900/80 backdrop-blur-3xl border border-white/5 rounded-[44px] shadow-[0_40px_80px_rgba(0,0,0,0.7)] group">
+                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-4 px-6 py-4 bg-slate-900/90 backdrop-blur-2xl border border-white/5 rounded-3xl shadow-2xl">
                             <button
                                 onClick={() => setIsMuted(!isMuted)}
                                 className={cn(
-                                    "w-16 h-16 rounded-full flex items-center justify-center transition-all active:scale-90",
-                                    isMuted ? "bg-rose-500 text-white shadow-xl shadow-rose-900/30" : "bg-white/5 text-white hover:bg-white/10"
+                                    "w-12 h-12 rounded-full flex items-center justify-center transition-all",
+                                    isMuted ? "bg-rose-500 text-white" : "bg-white/10 text-white hover:bg-white/20"
                                 )}
                             >
-                                {isMuted ? <MicOff className="w-7 h-7" /> : <Mic className="w-7 h-7" />}
+                                {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
                             </button>
                             <button
                                 onClick={() => setIsVideoOff(!isVideoOff)}
                                 className={cn(
-                                    "w-16 h-16 rounded-full flex items-center justify-center transition-all active:scale-90",
-                                    isVideoOff ? "bg-rose-500 text-white shadow-xl shadow-rose-900/30" : "bg-white/5 text-white hover:bg-white/10"
+                                    "w-12 h-12 rounded-full flex items-center justify-center transition-all",
+                                    isVideoOff ? "bg-rose-500 text-white" : "bg-white/10 text-white hover:bg-white/20"
                                 )}
                             >
-                                {isVideoOff ? <VideoOff className="w-7 h-7" /> : <VideoIcon className="w-7 h-7" />}
+                                {isVideoOff ? <VideoOff className="w-5 h-5" /> : <VideoIcon className="w-5 h-5" />}
                             </button>
-                            <button className="w-16 h-16 rounded-full bg-white/5 hover:bg-white/10 text-white flex items-center justify-center transition-all active:scale-90">
-                                <MonitorUp className="w-7 h-7" />
+                            <button className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center hidden sm:flex">
+                                <MonitorUp className="w-5 h-5" />
                             </button>
 
-                            <div className="w-px h-12 bg-white/10 mx-2"></div>
+                            <div className="w-px h-8 bg-white/10 mx-1 hidden sm:block"></div>
 
-                            <button className="w-20 h-20 rounded-full bg-rose-600 hover:bg-rose-700 text-white shadow-[0_24px_48px_rgba(225,29,72,0.4)] flex items-center justify-center transition-all hover:scale-110 active:scale-90">
-                                <PhoneOff className="w-10 h-10" />
+                            <button className="w-14 h-14 rounded-full bg-rose-600 hover:bg-rose-700 text-white shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95">
+                                <PhoneOff className="w-6 h-6" />
                             </button>
                         </div>
 
                         {/* Local PIP */}
-                        <div className="absolute bottom-10 right-10 z-40 w-56 md:w-80 aspect-video bg-slate-800 rounded-[40px] overflow-hidden border-2 border-white/10 shadow-2xl ring-[12px] ring-black/30 group-hover:scale-[1.03] transition-transform duration-700">
+                        <div className="absolute bottom-6 right-6 z-40 w-44 md:w-56 aspect-video bg-slate-800 rounded-2xl overflow-hidden border border-white/10 shadow-2xl transition-all duration-700">
                             {isVideoOff ? (
                                 <div className="w-full h-full flex items-center justify-center bg-slate-900">
-                                    <VideoOff className="w-12 h-12 text-slate-700" />
+                                    <User className="w-10 h-10 text-slate-700" />
                                 </div>
                             ) : (
                                 <video
@@ -232,37 +232,36 @@ const TeleconsultationView: React.FC = () => {
                                     className="w-full h-full object-cover"
                                 />
                             )}
-                            <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-black/40 backdrop-blur-xl rounded-xl border border-white/5">
-                                <div className="w-1.5 h-6 bg-blue-500 rounded-full"></div>
-                                <span className="text-[10px] font-black text-white uppercase tracking-widest">DR. WINCHESTER</span>
+                            <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/40 backdrop-blur-lg rounded-lg border border-white/5">
+                                <span className="text-[8px] font-black text-white uppercase tracking-widest">DR. WINCHESTER</span>
                             </div>
                         </div>
                     </div>
 
                     {/* Bottom Utility (Notes) Area */}
-                    <div className="flex-1 bg-white rounded-[56px] border border-slate-100 shadow-xl flex flex-col overflow-hidden min-h-[280px]">
-                        <div className="flex items-center gap-10 px-12 pt-6 border-b border-slate-50 shrink-0">
-                            {['Evolução Clínica', 'Prescrições', 'Exames Solicitados', 'Anexos'].map((tab, i) => (
+                    <div className="flex-1 bg-white rounded-[40px] border border-slate-100 shadow-xl flex flex-col overflow-hidden min-h-[220px]">
+                        <div className="flex items-center gap-6 px-8 pt-4 border-b border-slate-50 shrink-0">
+                            {['Evolução', 'Prescrições', 'Exames', 'Anexos'].map((tab, i) => (
                                 <button key={tab} className={cn(
-                                    "pb-6 font-black text-[11px] uppercase tracking-[0.25em] transition-all relative",
+                                    "pb-4 font-black text-[9px] uppercase tracking-widest transition-all relative",
                                     i === 0 ? "text-blue-600" : "text-slate-400 hover:text-slate-600"
                                 )}>
                                     {tab}
-                                    {i === 0 && <div className="absolute bottom-0 left-0 w-full h-1.5 bg-blue-600 rounded-full"></div>}
+                                    {i === 0 && <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-600 rounded-full"></div>}
                                 </button>
                             ))}
                         </div>
-                        <div className="flex-1 p-10 grid grid-cols-1 lg:grid-cols-12 gap-10 overflow-y-auto custom-scrollbar">
-                            <div className="lg:col-span-4 space-y-4">
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Motivo Principal</p>
-                                <div className="bg-slate-50 p-8 rounded-[40px] italic text-slate-600 text-sm leading-relaxed border border-slate-100 shadow-inner">
+                        <div className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-y-auto custom-scrollbar">
+                            <div className="lg:col-span-4 space-y-3">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">Motivo Principal</p>
+                                <div className="bg-slate-50/50 p-6 rounded-3xl italic text-slate-600 text-xs leading-relaxed border border-slate-100">
                                     "Paciente relata sintomas persistentes há 3 dias..."
                                 </div>
                             </div>
                             <div className="lg:col-span-8 flex flex-col">
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 mb-4">Anotações Winchester Health</p>
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-3">Anotações Winchester Health</p>
                                 <textarea
-                                    className="flex-1 bg-slate-50 border border-slate-100 rounded-[40px] p-8 text-sm font-medium outline-none focus:bg-white focus:ring-8 focus:ring-blue-600/5 transition-all resize-none shadow-inner"
+                                    className="flex-1 bg-slate-50 border border-slate-100 rounded-3xl p-6 text-xs font-medium outline-none focus:bg-white focus:ring-1 focus:ring-blue-100 transition-all resize-none"
                                     placeholder="Inicie o registro eletrônico aqui..."
                                 ></textarea>
                             </div>
@@ -270,89 +269,83 @@ const TeleconsultationView: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Right: Immersive Sidebar (Queue) */}
-                <div className="w-full lg:w-[420px] flex flex-col shrink-0 min-h-0 h-full">
-                    <div className="bg-white h-full rounded-[56px] shadow-2xl border border-slate-100 flex flex-col overflow-hidden">
-                        <div className="p-10 border-b border-slate-50 bg-slate-50/20 shrink-0">
+                {/* Right: Sidebar */}
+                <div className="w-full lg:w-[320px] xl:w-[380px] flex flex-col shrink-0 min-h-0 h-full">
+                    <div className="bg-white h-full rounded-[40px] shadow-2xl border border-slate-100 flex flex-col overflow-hidden">
+                        <div className="p-8 border-b border-slate-50 bg-slate-50/20 shrink-0">
                             <div className="flex items-center justify-between">
-                                <h3 className="font-black text-slate-900 text-2xl tracking-tighter">Fila Dinâmica</h3>
-                                <div className="w-12 h-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center shadow-lg">
-                                    <Activity className="w-6 h-6 text-blue-600" />
+                                <h3 className="font-black text-slate-900 text-xl tracking-tighter">Fila Dinâmica</h3>
+                                <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center shadow-sm">
+                                    <Activity className="w-5 h-5 text-blue-600" />
                                 </div>
                             </div>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-3">Próximas Teleconsultas</p>
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-2">Próximas Teleconsultas</p>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
+                        <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
                             {loading ? (
-                                <div className="flex flex-col items-center justify-center h-full gap-5 opacity-40">
-                                    <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.3em]">Sincronizando Banco...</p>
+                                <div className="flex flex-col items-center justify-center h-full gap-4 opacity-40">
+                                    <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                    <p className="text-[8px] font-black uppercase tracking-widest">Sincronizando...</p>
                                 </div>
                             ) : appointments.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center p-12 text-center h-full animate-in fade-in zoom-in-95 duration-700">
-                                    <div className="w-32 h-32 bg-slate-50 rounded-full flex items-center justify-center mb-6 shadow-inner ring-1 ring-slate-100">
-                                        <Search className="w-12 h-12 text-slate-200" />
+                                <div className="flex flex-col items-center justify-center p-8 text-center h-full animate-in fade-in zoom-in-95 duration-700">
+                                    <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4 shadow-inner ring-1 ring-slate-100">
+                                        <Search className="w-8 h-8 text-slate-200" />
                                     </div>
-                                    <h4 className="font-black text-slate-400 text-sm uppercase tracking-widest">Nenhuma Sessão Ativa</h4>
-                                    <p className="text-[10px] text-slate-300 font-bold mt-2 uppercase tracking-tight">Os pacientes confirmados aparecerão aqui</p>
+                                    <h4 className="font-black text-slate-400 text-[10px] uppercase tracking-widest">Nenhuma Sessão Ativa</h4>
                                 </div>
                             ) : appointments.map((apt) => (
                                 <button
                                     key={apt.id}
                                     onClick={() => setActivePatient(apt)}
                                     className={cn(
-                                        "w-full p-8 h-44 rounded-[48px] border transition-all relative overflow-hidden group text-left flex flex-col justify-between",
+                                        "w-full p-6 rounded-3xl border transition-all relative overflow-hidden group text-left flex flex-col justify-between",
                                         activePatient?.id === apt.id
-                                            ? "bg-slate-900 border-slate-800 text-white shadow-2xl scale-[1.02]"
+                                            ? "bg-slate-900 border-slate-800 text-white shadow-xl scale-[1.02]"
                                             : "bg-white border-slate-100 hover:border-blue-200 hover:bg-slate-50 text-slate-900"
                                     )}
                                 >
                                     <div className="flex items-start justify-between">
-                                        <div className="flex items-center gap-6">
+                                        <div className="flex items-center gap-4">
                                             <div className={cn(
-                                                "w-16 h-16 rounded-2xl flex items-center justify-center font-black text-2xl shadow-xl",
-                                                activePatient?.id === apt.id ? "bg-blue-600 text-white" : "bg-slate-100"
+                                                "w-12 h-12 rounded-[14px] flex items-center justify-center font-black text-lg shadow-sm border border-transparent",
+                                                activePatient?.id === apt.id ? "bg-blue-600 text-white" : "bg-slate-100 border-slate-200/50"
                                             )}>
                                                 {apt.patient?.name.split(' ').map((n: any) => n[0]).join('')}
                                             </div>
-                                            <div>
-                                                <h4 className="font-black text-lg tracking-tight leading-none">{apt.patient?.name}</h4>
-                                                <div className="flex items-center gap-2 mt-2">
-                                                    <Clock className={cn("w-3.5 h-3.5", activePatient?.id === apt.id ? "text-blue-400" : "text-slate-400")} />
-                                                    <span className={cn("text-[11px] font-black uppercase tracking-widest", activePatient?.id === apt.id ? "text-blue-400" : "text-slate-400")}>
-                                                        {apt.start_time}
+                                            <div className="min-w-0">
+                                                <h4 className="font-black text-sm tracking-tight leading-none truncate">{apt.patient?.name}</h4>
+                                                <div className="flex items-center gap-1.5 mt-1.5 opacity-60">
+                                                    <Clock className="w-3 h-3" />
+                                                    <span className="text-[9px] font-black uppercase tracking-widest">
+                                                        {apt.start_time.substring(0, 5)}
                                                     </span>
                                                 </div>
                                             </div>
                                         </div>
                                         {activePatient?.id === apt.id && (
-                                            <div className="flex items-center gap-2 px-3 py-1 bg-blue-600/20 text-blue-400 rounded-full">
-                                                <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse"></span>
-                                                <span className="text-[10px] font-black">AO VIVO</span>
+                                            <div className="flex items-center gap-1.5 px-2 py-0.5 bg-blue-600/20 text-blue-400 rounded-full">
+                                                <span className="w-1 h-1 bg-blue-400 rounded-full animate-pulse"></span>
+                                                <span className="text-[8px] font-black uppercase">VIVO</span>
                                             </div>
                                         )}
                                     </div>
 
-                                    <div className="flex items-center justify-between pt-6 border-t border-white/5">
-                                        <p className={cn("text-[10px] font-black uppercase tracking-widest", activePatient?.id === apt.id ? "text-slate-500" : "text-slate-400")}>
-                                            Paciente em Sala de Espera
+                                    <div className="flex items-center justify-between pt-4 mt-4 border-t border-white/5">
+                                        <p className={cn("text-[9px] font-bold uppercase tracking-widest opacity-40")}>
+                                            Sala de Espera
                                         </p>
-                                        <div className={cn(
-                                            "w-12 h-12 rounded-2xl flex items-center justify-center transition-all",
-                                            activePatient?.id === apt.id ? "bg-white/10 text-white" : "bg-slate-50 text-slate-300"
-                                        )}>
-                                            <ExternalLink className="w-5 h-5" />
-                                        </div>
+                                        <ExternalLink className={cn("w-3.5 h-3.5", activePatient?.id === apt.id ? "text-white" : "text-slate-300")} />
                                     </div>
                                 </button>
                             ))}
                         </div>
 
-                        <div className="p-10 border-t border-slate-50 bg-slate-50/10 shrink-0">
-                            <button className="w-full h-16 bg-slate-900 text-white rounded-[28px] font-black text-xs uppercase tracking-[0.3em] shadow-2xl active:scale-95 transition-all hover:bg-slate-800 flex items-center justify-center gap-4">
-                                <Clipboard className="w-6 h-6" />
-                                Fechar Lote de Atendimento
+                        <div className="p-8 border-t border-slate-50 shrink-0 bg-white">
+                            <button className="w-full h-14 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all hover:bg-slate-800 flex items-center justify-center gap-3">
+                                <Clipboard className="w-5 h-5 opacity-40" />
+                                Lote de Atendimento
                             </button>
                         </div>
                     </div>
