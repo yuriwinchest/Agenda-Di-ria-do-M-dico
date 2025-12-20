@@ -45,32 +45,33 @@ const TeleconsultationView: React.FC = () => {
         };
     }, []);
 
-    useEffect(() => {
-        if (localVideoRef.current && localStream && !isVideoOff) {
-            localVideoRef.current.srcObject = localStream;
-            const playPromise = localVideoRef.current.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(error => {
-                    console.error("Auto-play was prevented:", error);
-                });
-            }
+    // Callback ref to handle video element mounting and stream binding
+    const setVideoRef = (node: HTMLVideoElement | null) => {
+        if (node && localStream && !isVideoOff) {
+            node.srcObject = localStream;
+            node.play().catch(e => console.warn("Auto-play blocked:", e));
         }
-    }, [localStream, isVideoOff]);
+    };
 
     const startCamera = async () => {
+        console.log("Iniciando acesso aos dispositivos...");
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
-                video: true,
+                video: { width: { ideal: 1280 }, height: { ideal: 720 } },
                 audio: true
+            }).catch(async (err) => {
+                console.warn("Falha ao abrir vídeo + áudio, tentando apenas vídeo...", err);
+                return await navigator.mediaDevices.getUserMedia({ video: true });
             });
+
+            console.log("Stream obtido com sucesso:", stream.id);
             setLocalStream(stream);
             setIsVideoOff(false);
-            console.log("Câmera ativada com sucesso");
         } catch (err: any) {
-            console.error("Erro ao acessar câmera:", err);
+            console.error("Erro detalhado na câmera:", err);
             const msg = err.name === 'NotAllowedError'
-                ? "Permissão de câmera negada. Clique no cadeado na barra de endereços para permitir."
-                : "Erro ao acessar câmera. Verifique se ela está conectada ou sendo usada por outro app.";
+                ? "Acesso à câmera foi recusado. Por favor, habilite a permissão no seu navegador."
+                : `Erro ao iniciar câmera: ${err.message}. Verifique a conexão do dispositivo.`;
             alert(msg);
         }
     };
@@ -220,28 +221,31 @@ const TeleconsultationView: React.FC = () => {
                             )}
                         </div>
 
-                        {/* Patient info moved to BOTTOM-LEFT of the video stage to avoid overlap with PIP in top-right */}
+                        {/* Patient info - Positioned TOP-LEFT */}
                         {activePatient && (
-                            <div className="absolute bottom-28 left-8 z-50 flex items-center gap-3 bg-black/60 backdrop-blur-xl border border-white/10 p-2 pr-6 rounded-2xl animate-in fade-in slide-in-from-bottom-4 duration-700">
-                                <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center font-black text-white text-sm">
+                            <div className="absolute top-8 left-8 z-50 flex items-center gap-3 bg-black/50 backdrop-blur-2xl border border-white/10 p-2 pr-6 rounded-2xl animate-in fade-in slide-in-from-left-4 duration-700">
+                                <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center font-black text-white text-lg">
                                     {activePatient.patient?.name?.split(' ')?.map((n: string) => n[0]).join('') || '?'}
                                 </div>
                                 <div className="min-w-0">
-                                    <h3 className="text-white font-black text-xs tracking-tight truncate max-w-[120px]">{activePatient.patient?.name}</h3>
-                                    <div className="flex items-center gap-1.5 mt-0.5">
-                                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
-                                        <span className="text-[8px] text-emerald-400 font-bold uppercase tracking-widest">PACIENTE CONECTADO</span>
+                                    <h3 className="text-white font-black text-sm tracking-tight truncate max-w-[200px]">{activePatient.patient?.name}</h3>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                        <div className="flex h-1.5 w-1.5 relative">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                                        </div>
+                                        <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-widest">Sessão Segura Winchester</span>
                                     </div>
                                 </div>
                             </div>
                         )}
 
-                        {/* Stage Controls */}
-                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 px-6 py-4 bg-slate-900/90 backdrop-blur-2xl border border-white/5 rounded-3xl shadow-2xl">
+                        {/* Stage Controls - Centered Bottom */}
+                        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 px-6 py-4 bg-slate-900/90 backdrop-blur-2xl border border-white/5 rounded-[32px] shadow-2xl">
                             <button
                                 onClick={() => setIsMuted(!isMuted)}
                                 className={cn(
-                                    "w-12 h-12 rounded-full flex items-center justify-center transition-all",
+                                    "w-12 h-12 rounded-2xl flex items-center justify-center transition-all",
                                     isMuted ? "bg-rose-500 text-white" : "bg-white/10 text-white hover:bg-white/20"
                                 )}
                             >
@@ -251,62 +255,58 @@ const TeleconsultationView: React.FC = () => {
                                 onClick={() => {
                                     if (!localStream) {
                                         startCamera();
-                                        setIsVideoOff(false);
                                     } else {
                                         setIsVideoOff(!isVideoOff);
                                     }
                                 }}
                                 className={cn(
-                                    "w-12 h-12 rounded-full flex items-center justify-center transition-all",
-                                    isVideoOff ? "bg-rose-500 text-white" : "bg-white/10 text-white hover:bg-white/20"
+                                    "w-12 h-12 rounded-2xl flex items-center justify-center transition-all",
+                                    (!localStream || isVideoOff) ? "bg-rose-500 text-white" : "bg-white/10 text-white hover:bg-white/20"
                                 )}
                             >
-                                {isVideoOff ? <VideoOff className="w-5 h-5" /> : <VideoIcon className="w-5 h-5" />}
+                                {(!localStream || isVideoOff) ? <VideoOff className="w-5 h-5" /> : <VideoIcon className="w-5 h-5" />}
                             </button>
-                            <button className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center hidden sm:flex">
+                            {!localStream && (
+                                <button
+                                    onClick={startCamera}
+                                    className="px-6 py-3 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 transition-all shadow-xl shadow-blue-900/40 animate-pulse whitespace-nowrap"
+                                >
+                                    Abrir Minha Câmera
+                                </button>
+                            )}
+                            <button className="w-12 h-12 rounded-2xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center hidden sm:flex">
                                 <MonitorUp className="w-5 h-5" />
                             </button>
 
                             <div className="w-px h-8 bg-white/10 mx-1 hidden sm:block"></div>
 
-                            <button className="w-14 h-14 rounded-full bg-rose-600 hover:bg-rose-700 text-white shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95">
+                            <button className="w-14 h-14 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95">
                                 <PhoneOff className="w-6 h-6" />
                             </button>
                         </div>
 
-                        {/* Local PIP - Positioned TOP-RIGHT with highest z-index */}
-                        <div className="absolute top-8 right-8 z-[100] w-56 md:w-72 aspect-video bg-slate-900 rounded-[32px] overflow-hidden border border-white/20 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] transition-all duration-700 hover:scale-[1.05] ring-2 ring-white/10 group/pip">
-                            {isVideoOff ? (
-                                <div className="w-full h-full flex flex-col items-center justify-center bg-slate-950 gap-4">
-                                    <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10">
-                                        <User className="w-7 h-7 text-slate-700" />
+                        {/* Local PIP - Positioned BOTTOM-RIGHT */}
+                        <div className="absolute bottom-8 right-8 z-[60] w-56 md:w-64 aspect-video bg-slate-900 rounded-[32px] overflow-hidden border border-white/20 shadow-2xl transition-all duration-700 hover:scale-[1.05] ring-2 ring-white/10 group/pip">
+                            {isVideoOff || !localStream ? (
+                                <div className="w-full h-full flex flex-col items-center justify-center bg-slate-950 gap-3">
+                                    <div className="w-12 h-12 rounded-full bg-slate-900 flex items-center justify-center border border-white/5">
+                                        <User className="w-6 h-6 text-slate-700" />
                                     </div>
-                                    {!localStream && (
-                                        <button
-                                            id="activate-camera-btn"
-                                            onClick={() => {
-                                                console.log("Botão de ativação clicado");
-                                                startCamera();
-                                            }}
-                                            className="px-6 py-3 bg-blue-600 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 transition-all shadow-2xl shadow-blue-900/40 relative z-[110] active:scale-95 animate-pulse"
-                                        >
-                                            Ativar Minha Câmera
-                                        </button>
-                                    )}
+                                    <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Sua Câmera Offline</p>
                                 </div>
                             ) : (
                                 <video
-                                    ref={localVideoRef}
+                                    ref={setVideoRef}
                                     autoPlay
                                     muted
                                     playsInline
                                     className="w-full h-full object-cover"
                                 />
                             )}
-                            <div className="absolute bottom-4 left-4 px-3 py-1.5 bg-black/60 backdrop-blur-xl rounded-xl border border-white/10">
-                                <span className="text-[8px] font-black text-white uppercase tracking-widest flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
-                                    DR. WINCHESTER (YOU)
+                            <div className="absolute bottom-4 left-4 px-2 py-1 bg-black/60 backdrop-blur-xl rounded-lg border border-white/5">
+                                <span className="text-[7px] font-black text-white uppercase tracking-widest flex items-center gap-1.5">
+                                    <div className={`w-1 h-1 rounded-full ${(!localStream || isVideoOff) ? 'bg-slate-500' : 'bg-emerald-500 animate-pulse'}`}></div>
+                                    VOCÊ (DR. WINCHESTER)
                                 </span>
                             </div>
                         </div>
