@@ -187,7 +187,7 @@ const TeleconsultationView: React.FC = () => {
                         )}
 
                         {/* Stage Controls */}
-                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-4 px-6 py-4 bg-slate-900/90 backdrop-blur-2xl border border-white/5 rounded-3xl shadow-2xl">
+                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 px-6 py-4 bg-slate-900/90 backdrop-blur-2xl border border-white/5 rounded-3xl shadow-2xl">
                             <button
                                 onClick={() => setIsMuted(!isMuted)}
                                 className={cn(
@@ -218,7 +218,7 @@ const TeleconsultationView: React.FC = () => {
                         </div>
 
                         {/* Local PIP */}
-                        <div className="absolute bottom-6 right-6 z-40 w-44 md:w-56 aspect-video bg-slate-800 rounded-2xl overflow-hidden border border-white/10 shadow-2xl transition-all duration-700">
+                        <div className="absolute top-6 right-6 z-40 w-44 md:w-56 aspect-video bg-slate-800 rounded-2xl overflow-hidden border border-white/10 shadow-2xl transition-all duration-700 hover:scale-[1.02]">
                             {isVideoOff ? (
                                 <div className="w-full h-full flex items-center justify-center bg-slate-900">
                                     <User className="w-10 h-10 text-slate-700" />
