@@ -27,6 +27,7 @@ const TeleconsultationView: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [activePatient, setActivePatient] = useState<any>(null);
     const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+    const [copied, setCopied] = useState(false);
     const [activeTab, setActiveTab] = useState('Evolução');
     const [evolutionText, setEvolutionText] = useState('');
     const [prescriptionText, setPrescriptionText] = useState('');
@@ -209,7 +210,7 @@ const TeleconsultationView: React.FC = () => {
                         {activePatient && (
                             <div className="absolute top-6 left-6 z-20 flex items-center gap-3 bg-black/40 backdrop-blur-xl border border-white/10 p-2 pr-6 rounded-2xl animate-in fade-in slide-in-from-left-4 duration-700">
                                 <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center font-black text-white text-sm">
-                                    {activePatient.patient?.name.split(' ').map((n: string) => n[0]).join('')}
+                                    {activePatient.patient?.name?.split(' ')?.map((n: string) => n[0]).join('') || '?'}
                                 </div>
                                 <div className="min-w-0">
                                     <h3 className="text-white font-black text-sm tracking-tight truncate">{activePatient.patient?.name}</h3>
@@ -393,7 +394,7 @@ const TeleconsultationView: React.FC = () => {
                                                 "w-12 h-12 rounded-[14px] flex items-center justify-center font-black text-lg shadow-sm border border-transparent",
                                                 activePatient?.id === apt.id ? "bg-blue-600 text-white" : "bg-slate-100 border-slate-200/50"
                                             )}>
-                                                {apt.patient?.name.split(' ').map((n: any) => n[0]).join('')}
+                                                {apt.patient?.name?.split(' ')?.map((n: any) => n[0]).join('') || '?'}
                                             </div>
                                             <div className="min-w-0">
                                                 <h4 className="font-black text-sm tracking-tight leading-none truncate">{apt.patient?.name}</h4>
