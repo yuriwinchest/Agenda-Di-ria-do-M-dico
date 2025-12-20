@@ -619,6 +619,3 @@ const ClipboardText: React.FC<ClipboardTextProps> = (props) => (
 );
 
 export default InsuranceManagement;
-
-
-export default InsuranceManagement;
