@@ -46,17 +46,32 @@ const TeleconsultationView: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        if (localVideoRef.current && localStream) {
+        if (localVideoRef.current && localStream && !isVideoOff) {
             localVideoRef.current.srcObject = localStream;
+            const playPromise = localVideoRef.current.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.error("Auto-play was prevented:", error);
+                });
+            }
         }
-    }, [localStream, localVideoRef]);
+    }, [localStream, isVideoOff]);
 
     const startCamera = async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: true,
+                audio: true
+            });
             setLocalStream(stream);
-        } catch (err) {
+            setIsVideoOff(false);
+            console.log("Câmera ativada com sucesso");
+        } catch (err: any) {
             console.error("Erro ao acessar câmera:", err);
+            const msg = err.name === 'NotAllowedError'
+                ? "Permissão de câmera negada. Clique no cadeado na barra de endereços para permitir."
+                : "Erro ao acessar câmera. Verifique se ela está conectada ou sendo usada por outro app.";
+            alert(msg);
         }
     };
 
@@ -205,18 +220,18 @@ const TeleconsultationView: React.FC = () => {
                             )}
                         </div>
 
-                        {/* Top Overlay (Patient Info) */}
+                        {/* Patient info moved to BOTTOM-LEFT of the video stage to avoid overlap with PIP in top-right */}
                         {activePatient && (
-                            <div className="absolute top-6 left-6 z-20 flex items-center gap-3 bg-black/40 backdrop-blur-xl border border-white/10 p-2 pr-6 rounded-2xl animate-in fade-in slide-in-from-left-4 duration-700">
+                            <div className="absolute bottom-28 left-8 z-50 flex items-center gap-3 bg-black/60 backdrop-blur-xl border border-white/10 p-2 pr-6 rounded-2xl animate-in fade-in slide-in-from-bottom-4 duration-700">
                                 <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center font-black text-white text-sm">
                                     {activePatient.patient?.name?.split(' ')?.map((n: string) => n[0]).join('') || '?'}
                                 </div>
                                 <div className="min-w-0">
-                                    <h3 className="text-white font-black text-sm tracking-tight truncate">{activePatient.patient?.name}</h3>
-                                    <p className="text-[9px] text-emerald-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
-                                        <span className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse"></span>
-                                        PROTEGIDO
-                                    </p>
+                                    <h3 className="text-white font-black text-xs tracking-tight truncate max-w-[120px]">{activePatient.patient?.name}</h3>
+                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                                        <span className="text-[8px] text-emerald-400 font-bold uppercase tracking-widest">PACIENTE CONECTADO</span>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -259,20 +274,23 @@ const TeleconsultationView: React.FC = () => {
                             </button>
                         </div>
 
-                        {/* Local PIP */}
-                        <div className="absolute top-6 right-6 z-40 w-44 md:w-56 aspect-video bg-slate-800 rounded-2xl overflow-hidden border border-white/10 shadow-2xl transition-all duration-700 hover:scale-[1.02]">
+                        {/* Local PIP - Positioned TOP-RIGHT with highest z-index */}
+                        <div className="absolute top-8 right-8 z-[100] w-56 md:w-72 aspect-video bg-slate-900 rounded-[32px] overflow-hidden border border-white/20 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] transition-all duration-700 hover:scale-[1.05] ring-2 ring-white/10 group/pip">
                             {isVideoOff ? (
-                                <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900 gap-2">
-                                    <User className="w-10 h-10 text-slate-700" />
+                                <div className="w-full h-full flex flex-col items-center justify-center bg-slate-950 gap-4">
+                                    <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10">
+                                        <User className="w-7 h-7 text-slate-700" />
+                                    </div>
                                     {!localStream && (
                                         <button
+                                            id="activate-camera-btn"
                                             onClick={() => {
+                                                console.log("Botão de ativação clicado");
                                                 startCamera();
-                                                setIsVideoOff(false);
                                             }}
-                                            className="px-3 py-1 bg-blue-600 text-white text-[8px] font-black uppercase tracking-widest rounded-lg hover:bg-blue-700 transition-all shadow-lg"
+                                            className="px-6 py-3 bg-blue-600 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl hover:bg-blue-700 transition-all shadow-2xl shadow-blue-900/40 relative z-[110] active:scale-95 animate-pulse"
                                         >
-                                            Ligar Câmera
+                                            Ativar Minha Câmera
                                         </button>
                                     )}
                                 </div>
@@ -285,8 +303,11 @@ const TeleconsultationView: React.FC = () => {
                                     className="w-full h-full object-cover"
                                 />
                             )}
-                            <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/40 backdrop-blur-lg rounded-lg border border-white/5">
-                                <span className="text-[8px] font-black text-white uppercase tracking-widest">DR. WINCHESTER</span>
+                            <div className="absolute bottom-4 left-4 px-3 py-1.5 bg-black/60 backdrop-blur-xl rounded-xl border border-white/10">
+                                <span className="text-[8px] font-black text-white uppercase tracking-widest flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+                                    DR. WINCHESTER (YOU)
+                                </span>
                             </div>
                         </div>
                     </div>
