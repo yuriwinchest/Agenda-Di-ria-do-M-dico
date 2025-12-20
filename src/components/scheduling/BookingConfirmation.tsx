@@ -17,9 +17,13 @@ interface BookingConfirmationProps {
     loading?: boolean;
     observations?: string;
     onObservationsChange?: (value: string) => void;
+    modality: 'presencial' | 'telemedicina';
+    onModalityChange: (value: 'presencial' | 'telemedicina') => void;
 }
 
-const BookingConfirmation: React.FC<BookingConfirmationProps> = ({ data, onConfirm, loading, observations, onObservationsChange }) => {
+const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
+    data, onConfirm, loading, observations, onObservationsChange, modality, onModalityChange
+}) => {
     const { patient, service, procedure, slot, date } = data;
 
     if (!patient || !service || !slot || !procedure) return null;
@@ -53,7 +57,7 @@ const BookingConfirmation: React.FC<BookingConfirmationProps> = ({ data, onConfi
             </div>
 
             {/* Procedure info Compact */}
-            <div className="bg-blue-50/50 p-3 rounded-lg border border-blue-100">
+            <div className="bg-blue-50/50 p-3 rounded-lg border border-blue-100 italic">
                 <h4 className="text-[10px] font-bold text-blue-400 uppercase mb-1 flex items-center gap-1">
                     <span className="material-symbols-outlined text-sm">payments</span>
                     Procedimento Selecionado
@@ -64,6 +68,42 @@ const BookingConfirmation: React.FC<BookingConfirmationProps> = ({ data, onConfi
                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(procedure.base_price)}
                     </p>
                 </div>
+            </div>
+
+            {/* NEW: Consultation Modality Selection */}
+            <div className="space-y-2">
+                <label className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1 ml-1">
+                    <span className="material-symbols-outlined text-sm">settings_remote</span>
+                    Tipo de Atendimento
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                    <button
+                        onClick={() => onModalityChange('presencial')}
+                        className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${modality === 'presencial'
+                                ? 'bg-blue-50 border-blue-600 ring-4 ring-blue-50'
+                                : 'bg-white border-slate-100 hover:border-slate-200 text-slate-400'
+                            }`}
+                    >
+                        <span className={`material-symbols-outlined text-2xl ${modality === 'presencial' ? 'text-blue-600' : ''}`}>person_pin_circle</span>
+                        <span className={`text-[11px] font-bold uppercase tracking-wider ${modality === 'presencial' ? 'text-blue-600' : ''}`}>Presencial</span>
+                    </button>
+                    <button
+                        onClick={() => onModalityChange('telemedicina')}
+                        className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all ${modality === 'telemedicina'
+                                ? 'bg-indigo-50 border-indigo-600 ring-4 ring-indigo-50'
+                                : 'bg-white border-slate-100 hover:border-slate-200 text-slate-400'
+                            }`}
+                    >
+                        <span className={`material-symbols-outlined text-2xl ${modality === 'telemedicina' ? 'text-indigo-600' : ''}`}>video_chat</span>
+                        <span className={`text-[11px] font-bold uppercase tracking-wider ${modality === 'telemedicina' ? 'text-indigo-600' : ''}`}>Telemedicina</span>
+                    </button>
+                </div>
+                {modality === 'telemedicina' && (
+                    <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50/50 border border-indigo-100 rounded-xl animate-in zoom-in-95">
+                        <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse"></span>
+                        <p className="text-[10px] text-indigo-600 font-bold italic">O paciente será automaticamente listado na Sala de Espera Virtual.</p>
+                    </div>
+                )}
             </div>
 
             {/* Observation Field - NEW */}

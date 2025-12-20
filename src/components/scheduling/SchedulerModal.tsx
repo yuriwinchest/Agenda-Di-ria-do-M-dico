@@ -32,6 +32,7 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({ isOpen, onClose, initia
     const [paymentMethod, setPaymentMethod] = useState('');
     const [isBlock, setIsBlock] = useState(false);
     const [blockReason, setBlockReason] = useState('');
+    const [consultationModality, setConsultationModality] = useState<'presencial' | 'telemedicina'>('presencial');
 
     useEffect(() => {
         if (isOpen && initialDate) {
@@ -122,7 +123,7 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({ isOpen, onClose, initia
                     appointment_date: formatDateLocal(selectedDate),
                     start_time: selectedSlot.time,
                     status: isBlocking ? 'blocked' : 'confirmed',
-                    type: isBlocking ? 'blocked' : selectedProcedure.name,
+                    type: isBlocking ? 'blocked' : (consultationModality === 'telemedicina' ? 'Telepresença' : selectedProcedure.name),
                     observations: isBlocking ? selectedPatient.name : observations,
                     billing_type: billingType,
                     payment_method: paymentMethod,
@@ -140,7 +141,7 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({ isOpen, onClose, initia
                     .insert([{
                         appointment_id: appointment.id,
                         patient_id: selectedPatient.id,
-                        description: `${selectedProcedure.name} - ${selectedService.doctor.name}`,
+                        description: `${consultationModality === 'telemedicina' ? 'Teleconsulta' : 'Consulta Presencial'} - ${selectedProcedure.name} - ${selectedService.doctor.name}`,
                         amount: selectedProcedure.base_price,
                         tuss_code: selectedProcedure.code,
                         status: 'pending',
@@ -313,6 +314,8 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({ isOpen, onClose, initia
                                     date: selectedDate
                                 }}
                                 onConfirm={handleConfirm}
+                                modality={consultationModality}
+                                onModalityChange={setConsultationModality}
                             />
                         )}
                     </div>
