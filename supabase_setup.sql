@@ -34,5 +34,68 @@ VALUES
     (uuid_generate_v4(), 'Dr. Roberto Santos', 'Ortopedia', 'https://randomuser.me/api/portraits/men/45.jpg')
 ON CONFLICT (id) DO NOTHING;
 
--- Habilitar Realtime para convênios
-ALTER PUBLICATION supabase_realtime ADD TABLE insurances;
+-- 1. Tabelas de Convênios e TUSS
+CREATE TABLE IF NOT EXISTS public.tuss_procedures (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    code TEXT UNIQUE NOT NULL, -- Código TUSS
+    description TEXT NOT NULL,
+    category TEXT, -- Consulta, Exame, Cirurgia
+    base_value DECIMAL(10,2) DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+CREATE TABLE IF NOT EXISTS public.tiss_guides (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    patient_id UUID REFERENCES public.patients(id),
+    appointment_id UUID,
+    insurance_id UUID REFERENCES public.insurances(id),
+    guide_number TEXT UNIQUE,
+    auth_number TEXT,
+    status TEXT DEFAULT 'rascunho',
+    total_value DECIMAL(10,2) DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+    xml_data JSONB
+);
+
+-- 2. Infraestrutura de Eventos (EDA / Auditoria)
+CREATE TABLE IF NOT EXISTS public.system_events (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    event_type TEXT NOT NULL,
+    aggregate_id UUID,
+    user_id UUID,
+    payload JSONB NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+-- Habilitar Realtime com Blocos DO (Seguro contar erros de duplicidade)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables 
+        WHERE pubname = 'supabase_realtime' AND tablename = 'insurances'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.insurances;
+    END IF;
+    
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables 
+        WHERE pubname = 'supabase_realtime' AND tablename = 'tiss_guides'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.tiss_guides;
+    END IF;
+    
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables 
+        WHERE pubname = 'supabase_realtime' AND tablename = 'system_events'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.system_events;
+    END IF;
+END $$;
+
+-- Dados Iniciais TUSS (Exemplos)
+INSERT INTO public.tuss_procedures (code, description, category, base_value)
+VALUES 
+('10101012', 'CONSULTA EM CONSULTORIO (NO HORARIO NORMAL OU PREESTABELECIDO)', 'CONSULTA', 150.00),
+('40301017', 'HEMOGRAMA COM CONTAGEM DE PLAQUETAS', 'EXAME', 45.00),
+('40101010', 'ELETROCARDIOGRAMA', 'EXAME', 80.00)
+ON CONFLICT (code) DO NOTHING;

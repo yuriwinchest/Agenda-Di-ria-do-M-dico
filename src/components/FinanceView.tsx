@@ -165,8 +165,46 @@ const FinanceView: React.FC = () => {
             </div>
 
             {activeTab === 'insurances' ? (
-                <div className="flex-1 overflow-y-auto">
-                    <InsuranceManagement />
+                <div className="flex-1 flex flex-col gap-6 overflow-hidden min-h-0">
+                    <div className="flex items-center gap-2 p-1.5 bg-slate-100 rounded-2xl w-fit shrink-0">
+                        <button
+                            onClick={() => setToken('config')}
+                            className={cn("px-6 py-2 rounded-xl text-[10px] font-black uppercase transition-all",
+                                token !== 'guias' ? "bg-white text-blue-600 shadow-sm" : "text-slate-500")}
+                        >Configuração</button>
+                        <button
+                            onClick={() => setToken('guias')}
+                            className={cn("px-6 py-2 rounded-xl text-[10px] font-black uppercase transition-all",
+                                token === 'guias' ? "bg-white text-blue-600 shadow-sm" : "text-slate-500")}
+                        >Guias TISS</button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
+                        {token === 'guias' ? (
+                            <div className="space-y-4 animate-in fade-in duration-500">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {[1, 2, 3].map(i => (
+                                        <div key={i} className="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm space-y-4 group hover:border-blue-500 transition-all">
+                                            <div className="flex justify-between items-start">
+                                                <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 font-black">G</div>
+                                                <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[9px] font-black uppercase">Elegível</span>
+                                            </div>
+                                            <div>
+                                                <p className="font-black text-slate-900 uppercase text-sm">{i % 2 === 0 ? 'Ana Maria' : 'Carlos Lima'}</p>
+                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Guia: 2023-000{i} • TISS 4.01.00</p>
+                                            </div>
+                                            <div className="pt-4 border-t border-slate-50 flex justify-between items-center">
+                                                <span className="font-black text-blue-600">R$ 150,00</span>
+                                                <button className="text-[10px] font-black text-slate-400 uppercase hover:text-blue-600 transition-colors">Ver XML</button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <InsuranceManagement />
+                        )}
+                    </div>
                 </div>
             ) : (
                 <div className="flex flex-col lg:flex-row gap-6 h-full min-h-0">

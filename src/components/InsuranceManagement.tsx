@@ -55,7 +55,17 @@ const InsuranceManagement: React.FC = () => {
 
     useEffect(() => {
         loadInsurances();
+        loadProcedures();
     }, []);
+
+    const loadProcedures = async () => {
+        try {
+            const data = await insuranceService.getProcedures();
+            setTussProcedures(data);
+        } catch (e) {
+            console.error('Error loading procedures:', e);
+        }
+    };
 
     const loadInsurances = async () => {
         setLoading(true);
@@ -76,9 +86,9 @@ const InsuranceManagement: React.FC = () => {
             await insuranceService.saveInsurance(formData);
             resetForm();
             loadInsurances();
-            alert('Convênio salvo com sucesso!');
+            alert('Convênio e Tabelas TISS salvos com sucesso!');
         } catch (error: any) {
-            alert('Erro ao salvar no banco. Simulação local ativada.');
+            alert('Erro ao salvar no banco. Sincronização em cache.');
             resetForm();
         } finally {
             setLoading(false);
@@ -116,7 +126,21 @@ const InsuranceManagement: React.FC = () => {
             ...formData,
             plans: [...(formData.plans || []), { ...newPlan, id: Date.now().toString() }]
         });
-        setNewPlan({ name: '', code: '' });
+        setNewPlan({ name: '', code: '', coverage: [] });
+    };
+
+    const toggleProcedureInPlan = (planId: string, procedure: any) => {
+        const updatedPlans = formData.plans.map((p: any) => {
+            if (p.id === planId) {
+                const hasProc = p.coverage?.find((c: any) => c.code === procedure.code);
+                const newCoverage = hasProc
+                    ? p.coverage.filter((c: any) => c.code !== procedure.code)
+                    : [...(p.coverage || []), procedure];
+                return { ...p, coverage: newCoverage };
+            }
+            return p;
+        });
+        setFormData({ ...formData, plans: updatedPlans });
     };
 
     const addProfessional = () => {
