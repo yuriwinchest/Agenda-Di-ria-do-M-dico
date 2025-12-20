@@ -22,7 +22,7 @@ import {
 
 const TeleconsultationView: React.FC = () => {
     const [isMuted, setIsMuted] = useState(false);
-    const [isVideoOff, setIsVideoOff] = useState(false);
+    const [isVideoOff, setIsVideoOff] = useState(true);
     const [appointments, setAppointments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [activePatient, setActivePatient] = useState<any>(null);
@@ -38,7 +38,6 @@ const TeleconsultationView: React.FC = () => {
 
     useEffect(() => {
         loadTodayAppointments();
-        startCamera();
         return () => {
             if (localStream) {
                 localStream.getTracks().forEach(track => track.stop());
@@ -234,7 +233,14 @@ const TeleconsultationView: React.FC = () => {
                                 {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
                             </button>
                             <button
-                                onClick={() => setIsVideoOff(!isVideoOff)}
+                                onClick={() => {
+                                    if (!localStream) {
+                                        startCamera();
+                                        setIsVideoOff(false);
+                                    } else {
+                                        setIsVideoOff(!isVideoOff);
+                                    }
+                                }}
                                 className={cn(
                                     "w-12 h-12 rounded-full flex items-center justify-center transition-all",
                                     isVideoOff ? "bg-rose-500 text-white" : "bg-white/10 text-white hover:bg-white/20"
@@ -256,8 +262,19 @@ const TeleconsultationView: React.FC = () => {
                         {/* Local PIP */}
                         <div className="absolute top-6 right-6 z-40 w-44 md:w-56 aspect-video bg-slate-800 rounded-2xl overflow-hidden border border-white/10 shadow-2xl transition-all duration-700 hover:scale-[1.02]">
                             {isVideoOff ? (
-                                <div className="w-full h-full flex items-center justify-center bg-slate-900">
+                                <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900 gap-2">
                                     <User className="w-10 h-10 text-slate-700" />
+                                    {!localStream && (
+                                        <button
+                                            onClick={() => {
+                                                startCamera();
+                                                setIsVideoOff(false);
+                                            }}
+                                            className="px-3 py-1 bg-blue-600 text-white text-[8px] font-black uppercase tracking-widest rounded-lg hover:bg-blue-700 transition-all shadow-lg"
+                                        >
+                                            Ligar Câmera
+                                        </button>
+                                    )}
                                 </div>
                             ) : (
                                 <video
