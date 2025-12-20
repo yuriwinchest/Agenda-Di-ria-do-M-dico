@@ -12,6 +12,7 @@ import ProceduresView from './components/ProceduresView';
 import LoginPage from './components/LoginPage';
 import InsuranceManagement from './components/InsuranceManagement';
 import { ViewType } from './types';
+import { cn } from './lib/utils';
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -75,8 +76,14 @@ const App: React.FC = () => {
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
         <Header />
 
-        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 lg:p-6">
-          <div className="max-w-7xl mx-auto h-full flex flex-col">
+        <div className={cn(
+          "flex-1 overflow-y-auto overflow-x-hidden transition-all",
+          currentView === 'teleconsultation' ? "p-0" : "p-4 lg:p-6"
+        )}>
+          <div className={cn(
+            "h-full flex flex-col",
+            currentView === 'teleconsultation' ? "max-w-none" : "max-w-7xl mx-auto"
+          )}>
             {renderView()}
           </div>
 
