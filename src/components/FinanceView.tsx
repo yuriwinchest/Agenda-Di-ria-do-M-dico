@@ -1,10 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { financeService } from '../services/FinanceService';
+import { eventBus, EVENTS } from '../utils/eventBus';
 import InsuranceManagement from './InsuranceManagement';
+import { cn } from '../lib/utils';
+import {
+    CheckCircle2,
+    CreditCard,
+    Search,
+    UserSearch,
+    ShieldCheck,
+    AlertCircle,
+    ArrowRight
+} from 'lucide-react';
 
-// Real types based on DB schema
 interface QueueItem {
-    id: string; // transaction id
+    id: string;
     patient_id: string;
     name: string;
     time: string;
@@ -19,58 +30,36 @@ interface QueueItem {
 }
 
 const FinanceView: React.FC = () => {
-    const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null); // This will now be the Transaction ID for uniqueness
+    const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('credit');
     const [activeTab, setActiveTab] = useState<'pending' | 'paid' | 'refund' | 'insurances'>('pending');
     const [queueItems, setQueueItems] = useState<QueueItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedPatientInfo, setSelectedPatientInfo] = useState<any>(null);
 
-    // Health Plan specific states
+    // Insurance UI states
     const [token, setToken] = useState<string>('');
     const [authNumber, setAuthNumber] = useState<string>('');
     const [eligibilityStatus, setEligibilityStatus] = useState<'idle' | 'checking' | 'active' | 'denied'>('idle');
 
     // Modals
     const [showPaymentModal, setShowPaymentModal] = useState(false);
-    const [isEditingPatient, setIsEditingPatient] = useState(false);
     const [paymentStep, setPaymentStep] = useState<'method' | 'processing' | 'success'>('method');
-
-    // Patient Detail state
-    const [selectedPatientInfo, setSelectedPatientInfo] = useState<any>(null);
 
     useEffect(() => {
         if (activeTab !== 'insurances') {
-            fetchQueue();
+            loadQueue();
         }
+
+        // Subscribe to events
+        const unsub = eventBus.subscribe(EVENTS.PAYMENT_COMPLETED, () => loadQueue());
+        return () => unsub();
     }, [activeTab]);
 
-    const fetchQueue = async () => {
+    const loadQueue = async () => {
         setLoading(true);
-        const { data, error } = await supabase
-            .from('transactions')
-            .select(`
-                id,
-                amount,
-                status,
-                billing_status,
-                description,
-                created_at,
-                patient_id,
-                patients (
-                    name,
-                    insurance_provider,
-                    insurance_card_number,
-                    billing_type,
-                    cpf,
-                    phone,
-                    email
-                )
-            `)
-            .eq('status', activeTab === 'refund' ? 'refunded' : (activeTab === 'paid' ? 'paid' : 'pending'));
-
-        if (error) {
-            console.error('Error fetching finance queue:', error);
-        } else {
+        try {
+            const data = await financeService.getTransactions(activeTab);
             const mapped: QueueItem[] = (data || []).map((item: any) => ({
                 id: item.id,
                 patient_id: item.patient_id,
@@ -86,24 +75,10 @@ const FinanceView: React.FC = () => {
                 hasHealthPlan: (item.patients?.billing_type || 'Particular') === 'Convênio'
             }));
             setQueueItems(mapped);
-        }
-        setLoading(false);
-    };
-
-    const fetchPatientDetail = async (transactionId: string) => {
-        const item = queueItems.find(q => q.id === transactionId);
-        if (!item) return;
-
-        const { data, error } = await supabase
-            .from('patients')
-            .select('*')
-            .eq('id', item.patient_id)
-            .single();
-
-        if (error) {
-            console.error('Error fetching patient detail:', error);
-        } else {
-            setSelectedPatientInfo(data);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -115,341 +90,313 @@ const FinanceView: React.FC = () => {
         }
     }, [selectedPatientId]);
 
-    const selectedItem = queueItems.find(p => p.id === selectedPatientId);
+    const fetchPatientDetail = async (transactionId: string) => {
+        const item = queueItems.find(q => q.id === transactionId);
+        if (!item) return;
 
-    const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-    };
-
-    const handleCheckEligibility = () => {
-        setEligibilityStatus('checking');
-        setTimeout(() => {
-            setEligibilityStatus('active');
-        }, 1500);
+        const { data } = await supabase.from('patients').select('*').eq('id', item.patient_id).single();
+        setSelectedPatientInfo(data);
     };
 
     const handleFinalizePayment = async () => {
         if (!selectedPatientId) return;
-
         setPaymentStep('processing');
         setShowPaymentModal(true);
-
-        const { error } = await supabase
-            .from('transactions')
-            .update({
-                status: 'paid',
-                billing_status: 'authorized',
-                payment_method: selectedPaymentMethod,
-                payment_date: new Date().toISOString()
-            })
-            .eq('id', selectedPatientId);
-
-        if (error) {
-            alert("Erro ao processar pagamento: " + error.message);
-            setShowPaymentModal(false);
-        } else {
+        try {
+            await financeService.processPayment(selectedPatientId, selectedPaymentMethod);
             setPaymentStep('success');
-            fetchQueue();
+        } catch (error: any) {
+            alert(error.message);
+            setShowPaymentModal(false);
         }
     };
 
-    const handleDenyAuthorization = async () => {
+    const handleDeny = async () => {
         if (!selectedPatientId) return;
-
-        const confirmDeny = confirm('Deseja realmente marcar esta guia como GLOSADA/NEGADA?');
-        if (!confirmDeny) return;
-
-        const { error } = await supabase
-            .from('transactions')
-            .update({
-                billing_status: 'denied',
-                status: 'paid' // Keep as paid or refund but marked as denied
-            })
-            .eq('id', selectedPatientId);
-
-        if (error) {
-            alert("Erro ao glosar guia: " + error.message);
-        } else {
-            alert("Guia marcada como glosada.");
+        if (!confirm('Glosar esta guia?')) return;
+        try {
+            await financeService.denyAuthorization(selectedPatientId);
             setSelectedPatientId(null);
-            fetchQueue();
+            loadQueue();
+        } catch (error: any) {
+            alert(error.message);
         }
     };
+
+    const formatCurrency = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+
+    const selectedItem = queueItems.find(p => p.id === selectedPatientId);
 
     return (
-        <div className="flex flex-col h-full gap-6 overflow-y-auto pb-6">
-            <div className="flex items-center justify-between shrink-0">
+        <div className="flex flex-col h-full gap-4 md:gap-6 overflow-hidden">
+            {/* Header section with responsive layout */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0 px-1">
                 <div className="flex items-center gap-3">
-                    <h1 className="text-xl font-bold text-slate-900">Caixa e Faturamento</h1>
-                    <span className="bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-0.5 rounded">Caixa Aberto</span>
+                    <div className="p-2.5 bg-blue-600 rounded-xl shadow-lg shadow-blue-200">
+                        <CreditCard className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                        <h1 className="text-xl md:text-2xl font-bold text-slate-900 leading-tight">Gestão de Caixa</h1>
+                        <div className="flex items-center gap-2 mt-0.5">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Caixa Winchester Aberto</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex p-1 bg-slate-100/80 backdrop-blur-sm rounded-xl w-full sm:w-auto h-11 border border-slate-200/50">
+                    {(['pending', 'paid', 'insurances'] as const).map((tab) => (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab)}
+                            className={cn(
+                                "flex-1 sm:px-6 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2",
+                                activeTab === tab
+                                    ? "bg-white text-blue-600 shadow-sm ring-1 ring-slate-200"
+                                    : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                            )}
+                        >
+                            {tab === 'pending' && 'Aguardando'}
+                            {tab === 'paid' && 'Pagos'}
+                            {tab === 'insurances' && 'Convênios'}
+                        </button>
+                    ))}
                 </div>
             </div>
 
-            <div className="flex p-1 bg-slate-100 rounded-lg w-fit">
-                <button
-                    onClick={() => setActiveTab('pending')}
-                    className={`px-6 text-sm font-bold py-2 rounded-lg transition-all ${activeTab === 'pending' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                    Aguardando
-                </button>
-                <button
-                    onClick={() => setActiveTab('paid')}
-                    className={`px-6 text-sm font-bold py-2 rounded-lg transition-all ${activeTab === 'paid' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                    Pagos
-                </button>
-                <button
-                    onClick={() => setActiveTab('insurances')}
-                    className={`px-6 text-sm font-bold py-2 rounded-lg transition-all ${activeTab === 'insurances' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                    Convênios
-                </button>
-            </div>
-
             {activeTab === 'insurances' ? (
-                <InsuranceManagement />
+                <div className="flex-1 overflow-y-auto">
+                    <InsuranceManagement />
+                </div>
             ) : (
-                <div className="flex flex-col lg:flex-row gap-6 h-auto min-h-0">
-                    {/* Left Panel - Queue */}
-                    <div className="w-full lg:w-96 flex flex-col gap-4 shrink-0 h-fit lg:sticky lg:top-0">
-                        <h2 className="text-lg font-semibold text-slate-800">Fila de Atendimento</h2>
-                        <div className="flex flex-col gap-3">
-                            {loading ? (
-                                <div className="flex justify-center p-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div></div>
-                            ) : queueItems.length === 0 ? (
-                                <div className="p-8 text-center text-slate-400 text-sm bg-white rounded-xl border border-dashed border-slate-200">
-                                    Nenhuma transação pendente.
-                                </div>
-                            ) : queueItems.map(item => (
-                                <div
-                                    key={item.id}
-                                    onClick={() => setSelectedPatientId(item.id)}
-                                    className={`p-4 rounded-xl border transition-all cursor-pointer relative overflow-hidden ${selectedPatientId === item.id
-                                        ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500'
-                                        : 'bg-white border-slate-200 hover:border-blue-300'
-                                        }`}
-                                >
-                                    <div className={`absolute -right-8 top-2 rotate-45 px-8 pt-0.5 pb-1 text-[8px] font-bold uppercase tracking-widest text-center w-32 ${item.billing_type === 'Convênio' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'
-                                        }`}>
-                                        {item.billing_type}
+                <div className="flex flex-col lg:flex-row gap-6 h-full min-h-0">
+                    {/* Left Side: Queue List - Fully responsive width and cards */}
+                    <div className="w-full lg:w-96 flex flex-col gap-4 shrink-0 h-full">
+                        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex-1 flex flex-col overflow-hidden">
+                            <div className="flex items-center justify-between mb-4 px-1">
+                                <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Fila de Faturamento</h2>
+                                <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-1 rounded-full">{queueItems.length} itens</span>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto pr-1 space-y-3 custom-scrollbar">
+                                {loading ? (
+                                    <div className="flex flex-col gap-3 p-4">
+                                        {[1, 2, 3].map(i => <div key={i} className="h-24 bg-slate-50 rounded-xl animate-pulse"></div>)}
                                     </div>
+                                ) : queueItems.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-3 border-2 border-dashed border-slate-100 rounded-2xl p-8">
+                                        <AlertCircle className="w-10 h-10 opacity-20" />
+                                        <p className="text-xs font-medium text-center">Nenhuma transação pendente no momento.</p>
+                                    </div>
+                                ) : queueItems.map(item => (
+                                    <div
+                                        key={item.id}
+                                        onClick={() => setSelectedPatientId(item.id)}
+                                        className={cn(
+                                            "group p-4 rounded-2xl border transition-all cursor-pointer relative overflow-hidden active:scale-95",
+                                            selectedPatientId === item.id
+                                                ? 'bg-blue-600 border-blue-600 shadow-lg shadow-blue-100 scale-[1.02]'
+                                                : 'bg-white border-slate-100 hover:border-blue-200 hover:shadow-md'
+                                        )}
+                                    >
+                                        <div className={cn(
+                                            "flex flex-col",
+                                            selectedPatientId === item.id ? "text-white" : "text-slate-900"
+                                        )}>
+                                            <div className="flex justify-between items-start mb-2">
+                                                <h3 className="font-bold text-sm truncate pr-4">{item.name}</h3>
+                                                <span className={cn(
+                                                    "text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full",
+                                                    selectedPatientId === item.id ? "bg-white/20 text-white" : "bg-slate-50 text-slate-400"
+                                                )}>{item.time}</span>
+                                            </div>
+                                            <p className={cn(
+                                                "text-xs mb-4 truncate",
+                                                selectedPatientId === item.id ? "text-white/80" : "text-slate-500"
+                                            )}>{item.service}</p>
 
-                                    <span className={`absolute top-4 left-4 w-2 h-2 rounded-full ${item.billing_status === 'authorized' ? 'bg-green-500' :
-                                        item.billing_status === 'denied' ? 'bg-red-500' :
-                                            item.billing_status === 'auditing' ? 'bg-blue-500' : 'bg-slate-300'
-                                        }`}></span>
-
-                                    <div className="pl-4">
-                                        <div className="flex justify-between items-start">
-                                            <h3 className="font-bold text-slate-900 truncate pr-16">{item.name}</h3>
-                                            <span className="text-[10px] font-bold text-slate-400">{item.time}</span>
-                                        </div>
-                                        <p className="text-xs text-slate-500 mt-0.5 truncate">{item.service}</p>
-
-                                        <div className="flex justify-between items-center mt-3">
-                                            <span className={`text-[10px] font-bold uppercase tracking-wider ${item.hasHealthPlan ? 'text-blue-600' : 'text-slate-400'}`}>
-                                                {item.insurance}
-                                            </span>
-                                            <span className={`font-bold text-sm ${item.billing_status === 'denied' ? 'text-red-600 line-through opacity-50' : 'text-slate-900'}`}>
-                                                {item.value > 0 ? formatCurrency(item.value) : '---'}
-                                            </span>
+                                            <div className="flex justify-between items-end">
+                                                <div className="flex flex-col">
+                                                    <span className={cn(
+                                                        "text-[10px] font-bold uppercase",
+                                                        selectedPatientId === item.id ? "text-white/60" : "text-slate-400"
+                                                    )}>{item.insurance}</span>
+                                                    <span className="font-black text-base">{formatCurrency(item.value)}</span>
+                                                </div>
+                                                <div className={cn(
+                                                    "w-8 h-8 rounded-lg flex items-center justify-center transition-all",
+                                                    selectedPatientId === item.id ? "bg-white text-blue-600" : "bg-blue-50 text-blue-600 border border-blue-100"
+                                                )}>
+                                                    <ArrowRight className="w-4 h-4" />
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
                     </div>
 
-                    {/* Right Panel - Detail */}
-                    <div className="flex-1 flex flex-col gap-6 h-fit">
+                    {/* Right Side: Detail Panel - Responsive elements */}
+                    <div className="flex-1 flex flex-col gap-6 overflow-y-auto lg:overflow-visible pb-10 custom-scrollbar pr-1">
                         {selectedPatientInfo ? (
-                            <>
-                                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden">
-                                    {selectedItem?.billing_type === 'Convênio' && (
-                                        <div className="absolute top-0 right-0 p-4">
-                                            <div className={`p-3 rounded-xl border flex flex-col items-center gap-1 ${eligibilityStatus === 'active' ? 'bg-emerald-50 border-emerald-100' :
-                                                eligibilityStatus === 'denied' ? 'bg-red-50 border-red-100' : 'bg-slate-50 border-slate-100'
-                                                }`}>
-                                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Elegibilidade</span>
-                                                {eligibilityStatus === 'checking' ? (
-                                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                                                ) : (
-                                                    <div className="flex items-center gap-2">
-                                                        <span className={`w-2 h-2 rounded-full ${eligibilityStatus === 'active' ? 'bg-emerald-500' : eligibilityStatus === 'denied' ? 'bg-red-500' : 'bg-slate-300'}`}></span>
-                                                        <span className="text-xs font-bold text-slate-700">
-                                                            {eligibilityStatus === 'active' ? 'ATIVA' : eligibilityStatus === 'denied' ? 'INATIVA' : 'A VERIFICAR'}
-                                                        </span>
-                                                    </div>
-                                                )}
+                            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                {/* Patient Summary Card */}
+                                <div className="bg-white p-6 md:p-8 rounded-[32px] border border-slate-100 shadow-sm relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-blue-100 transition-colors"></div>
+
+                                    <div className="relative flex flex-col md:flex-row gap-6 items-center md:items-start text-center md:text-left">
+                                        <div className="w-24 h-24 rounded-[28px] bg-gradient-to-tr from-blue-600 to-indigo-500 p-1 shadow-xl shadow-blue-100 shrink-0">
+                                            <div className="w-full h-full bg-white rounded-[24px] flex items-center justify-center">
+                                                <span className="text-3xl font-black bg-clip-text text-transparent bg-gradient-to-tr from-blue-600 to-indigo-600 uppercase">
+                                                    {selectedPatientInfo.name.charAt(0)}
+                                                </span>
                                             </div>
                                         </div>
-                                    )}
 
-                                    <div className="flex flex-col md:flex-row gap-6 items-start">
-                                        <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center shrink-0 text-blue-600 font-bold text-2xl uppercase border-4 border-white shadow-sm">
-                                            {selectedPatientInfo.name.charAt(0)}
-                                        </div>
-                                        <div className="flex-1 w-full">
-                                            <div className="flex justify-between items-start">
-                                                <div>
-                                                    <h2 className="text-2xl font-bold text-slate-900">{selectedPatientInfo.name}</h2>
-                                                    <p className="text-sm text-slate-500 mt-1">CPF: {selectedPatientInfo.cpf} • {selectedPatientInfo.phone}</p>
-
-                                                    {selectedItem?.billing_type === 'Convênio' && (
-                                                        <div className="mt-4 flex items-center gap-4 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                                            <div>
-                                                                <p className="text-[10px] font-bold text-slate-400 uppercase">Convênio</p>
-                                                                <p className="text-sm font-bold text-slate-700">{selectedPatientInfo.insurance_provider}</p>
-                                                            </div>
-                                                            <div className="w-px h-8 bg-slate-200"></div>
-                                                            <div>
-                                                                <p className="text-[10px] font-bold text-slate-400 uppercase">Carteirinha</p>
-                                                                <p className="text-sm font-mono font-bold text-slate-700">{selectedPatientInfo.insurance_card_number || '---'}</p>
-                                                            </div>
-                                                            <button
-                                                                onClick={handleCheckEligibility}
-                                                                className="ml-auto bg-blue-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-all uppercase"
-                                                            >
-                                                                Verificar Online
-                                                            </button>
-                                                        </div>
-                                                    )}
+                                        <div className="flex-1 space-y-4">
+                                            <div>
+                                                <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">{selectedPatientInfo.name}</h2>
+                                                <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-2">
+                                                    <div className="flex items-center gap-1.5 text-slate-400 font-bold text-xs uppercase tracking-wider">
+                                                        <AlertCircle className="w-4 h-4 text-blue-500" />
+                                                        CPF: {selectedPatientInfo.cpf}
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 text-slate-400 font-bold text-xs uppercase tracking-wider">
+                                                        <AlertCircle className="w-4 h-4 text-emerald-500" />
+                                                        {selectedPatientInfo.phone}
+                                                    </div>
                                                 </div>
                                             </div>
+
+                                            {selectedItem?.billing_type === 'Convênio' && (
+                                                <div className="mt-4 flex flex-col md:flex-row items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200/50">
+                                                    <div className="flex-1 flex gap-6">
+                                                        <div>
+                                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Convênio Ativo</p>
+                                                            <p className="text-sm font-bold text-slate-700">{selectedPatientInfo.insurance_provider}</p>
+                                                        </div>
+                                                        <div className="w-px h-10 bg-slate-200"></div>
+                                                        <div className="flex-1">
+                                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Carteirinha</p>
+                                                            <p className="text-sm font-mono font-black text-blue-600">{selectedPatientInfo.insurance_card_number || '---'}</p>
+                                                        </div>
+                                                    </div>
+                                                    <button className="w-full md:w-auto px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase text-slate-600 hover:bg-slate-100 transition-all active:scale-95 shadow-sm">
+                                                        Verificar Elegibilidade
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                                    <h3 className="font-bold text-slate-900 mb-4 text-lg">Resumo Financeiro</h3>
-                                    <div className="space-y-3">
-                                        <div className="flex justify-between text-slate-600 text-sm">
-                                            <span>Serviço: {selectedItem?.service}</span>
-                                            <span>{formatCurrency(selectedItem?.value || 0)}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center pt-3 border-t border-slate-100">
-                                            <span className="text-lg font-bold text-slate-900">Total a Pagar</span>
-                                            <span className="text-2xl font-bold text-blue-600">{formatCurrency(selectedItem?.value || 0)}</span>
-                                        </div>
-                                    </div>
-
-                                    {selectedItem?.billing_type === 'Convênio' ? (
-                                        <div className="mt-8 bg-blue-50/50 p-6 rounded-2xl border border-blue-100">
-                                            <div className="flex items-center gap-2 mb-4">
-                                                <span className="material-symbols-outlined text-blue-600">verified</span>
-                                                <h3 className="text-sm font-bold text-blue-900 uppercase tracking-wider">Autorização de Guia (TISS)</h3>
-                                            </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="flex flex-col gap-1.5">
-                                                    <label className="text-xs font-bold text-blue-700">Token de Autorização</label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Digite o código enviado pelo convênio"
-                                                        value={token}
-                                                        onChange={(e) => setToken(e.target.value)}
-                                                        className="px-4 py-2.5 bg-white border border-blue-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-                                                    />
+                                {/* Billing Action Card */}
+                                <div className="bg-white rounded-[32px] border border-slate-200 shadow-xl overflow-hidden">
+                                    <div className="p-8 space-y-8">
+                                        <div>
+                                            <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+                                                <span className="w-2 h-6 bg-blue-600 rounded-full"></span>
+                                                Resumo da Transação
+                                            </h3>
+                                            <div className="flex flex-col gap-4">
+                                                <div className="flex justify-between items-center py-4 px-6 bg-slate-50/50 rounded-2xl border border-slate-100">
+                                                    <span className="text-slate-500 font-bold text-sm tracking-tight">{selectedItem?.service}</span>
+                                                    <span className="text-slate-900 font-black text-lg">{formatCurrency(selectedItem?.value || 0)}</span>
                                                 </div>
-                                                <div className="flex flex-col gap-1.5">
-                                                    <label className="text-xs font-bold text-blue-700">Número da Autorização</label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Ex: GUID-98210"
-                                                        value={authNumber}
-                                                        onChange={(e) => setAuthNumber(e.target.value)}
-                                                        className="px-4 py-2.5 bg-white border border-blue-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-                                                    />
+                                                <div className="flex justify-between items-center px-6">
+                                                    <span className="text-xl font-bold text-slate-900">Total a Receber</span>
+                                                    <span className="text-3xl font-black text-blue-600">{formatCurrency(selectedItem?.value || 0)}</span>
                                                 </div>
                                             </div>
                                         </div>
-                                    ) : (
-                                        <div className="mt-8">
-                                            <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-3">Método de Pagamento</h3>
-                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                                {[
-                                                    { id: 'credit', label: 'Crédito', icon: 'credit_card' },
-                                                    { id: 'debit', label: 'Débito', icon: 'credit_score' },
-                                                    { id: 'pix', label: 'Pix', icon: 'qr_code_2' },
-                                                    { id: 'money', label: 'Dinheiro', icon: 'payments' }
-                                                ].map(method => (
-                                                    <button
-                                                        key={method.id}
-                                                        onClick={() => setSelectedPaymentMethod(method.id)}
-                                                        className={`flex flex-col items-center justify-center gap-3 p-4 rounded-xl border-2 transition-all ${selectedPaymentMethod === method.id
-                                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                                            : 'border-slate-100 bg-white text-slate-600 hover:border-slate-200'
-                                                            } relative`}
-                                                    >
-                                                        <span className="material-symbols-outlined text-[32px]">{method.icon}</span>
-                                                        <span className="font-medium">{method.label}</span>
-                                                    </button>
-                                                ))}
+
+                                        {selectedItem?.billing_type !== 'Convênio' && (
+                                            <div>
+                                                <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Método de Liquidação</h3>
+                                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                                    {[
+                                                        { id: 'credit', label: 'Cartão', icon: CreditCard },
+                                                        { id: 'pix', label: 'PIX Cofrinho', icon: ShieldCheck },
+                                                        { id: 'money', label: 'Espécie', icon: AlertCircle },
+                                                        { id: 'debit', label: 'Débito', icon: CreditCard }
+                                                    ].map(method => (
+                                                        <button
+                                                            key={method.id}
+                                                            onClick={() => setSelectedPaymentMethod(method.id)}
+                                                            className={cn(
+                                                                "flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border-2 transition-all active:scale-95",
+                                                                selectedPaymentMethod === method.id
+                                                                    ? "border-blue-600 bg-blue-50/50 text-blue-700 shadow-sm"
+                                                                    : "border-slate-50 bg-slate-50/50 text-slate-400 hover:border-slate-200"
+                                                            )}
+                                                        >
+                                                            <method.icon className={cn("w-7 h-7", selectedPaymentMethod === method.id ? "text-blue-600" : "text-slate-300")} />
+                                                            <span className="text-xs font-black uppercase tracking-wider">{method.label}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                    )}
+                                        )}
 
-                                    <div className="mt-8 flex justify-between items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                                        <button
-                                            onClick={handleDenyAuthorization}
-                                            className="text-red-500 font-bold text-sm hover:underline flex items-center gap-1"
-                                        >
-                                            <span className="material-symbols-outlined text-lg">cancel</span>
-                                            Glosar Atendimento
-                                        </button>
-
-                                        {activeTab === 'pending' && (
+                                        <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t border-slate-100">
+                                            <button
+                                                onClick={handleDeny}
+                                                className="flex-1 py-4 px-6 rounded-2xl border border-rose-100 text-rose-500 font-bold text-sm hover:bg-rose-50 transition-all flex items-center justify-center gap-2"
+                                            >
+                                                Glosar / Cancelar
+                                            </button>
                                             <button
                                                 onClick={handleFinalizePayment}
-                                                className="px-10 py-4 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-200 flex items-center justify-center gap-3"
+                                                className="flex-[2] py-4 px-10 bg-slate-900 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-slate-800 transition-all shadow-2xl shadow-slate-200 flex items-center justify-center gap-4 active:scale-95"
                                             >
-                                                <span className="material-symbols-outlined text-[24px]">
-                                                    {selectedItem?.billing_type === 'Convênio' ? 'task_alt' : 'payments'}
-                                                </span>
-                                                {selectedItem?.billing_type === 'Convênio' ? 'Confirmar Autorização' : 'Finalizar e Receber'}
+                                                <CheckCircle2 className="w-5 h-5" />
+                                                Finalizar Recebimento
                                             </button>
-                                        )}
+                                        </div>
                                     </div>
                                 </div>
-                            </>
+                            </div>
                         ) : (
-                            <div className="flex flex-col items-center justify-center h-64 bg-white rounded-2xl border border-dashed border-slate-200 text-slate-400">
-                                <span className="material-symbols-outlined text-4xl mb-2">person_search</span>
-                                Selecione um item na fila para ver detalhes
+                            <div className="flex-1 flex flex-col items-center justify-center bg-white rounded-[32px] border-2 border-dashed border-slate-100 text-slate-300 p-12">
+                                <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6">
+                                    <UserSearch className="w-10 h-10 opacity-20" />
+                                </div>
+                                <h4 className="text-lg font-bold text-slate-400">Pronto para processar</h4>
+                                <p className="text-sm font-medium opacity-60 text-center max-w-xs mt-2">Escolha um item na fila à esquerda para iniciar o faturamento ou conferência de guias.</p>
                             </div>
                         )}
                     </div>
                 </div>
             )}
 
+            {/* Payment Success Modal with responsive feel */}
             {showPaymentModal && (
-                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-                        {paymentStep === 'processing' && (
-                            <div className="p-12 flex flex-col items-center text-center">
-                                <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-6 animate-pulse">
-                                    <span className="material-symbols-outlined text-4xl text-blue-600">sync</span>
-                                </div>
-                                <h3 className="text-xl font-bold text-slate-900 mb-2">Processando Pagamento</h3>
-                                <p className="text-slate-500 text-sm">Aguarde enquanto confirmamos a transação...</p>
-                            </div>
-                        )}
-
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl z-50 flex items-center justify-center p-4 overflow-y-auto">
+                    <div className="bg-white rounded-[40px] w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in duration-300">
                         {paymentStep === 'success' && (
-                            <div className="p-12 flex flex-col items-center text-center animate-in zoom-in-95 duration-500">
-                                <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6">
-                                    <span className="material-symbols-outlined text-5xl">check_circle</span>
+                            <div className="p-10 md:p-14 text-center space-y-8">
+                                <div className="relative inline-block">
+                                    <div className="w-28 h-28 bg-emerald-100 rounded-[40px] flex items-center justify-center animate-bounce">
+                                        <CheckCircle2 className="w-14 h-14 text-emerald-600" />
+                                    </div>
+                                    <div className="absolute inset-0 bg-emerald-400 rounded-full blur-3xl opacity-20 animate-pulse"></div>
                                 </div>
-                                <h3 className="text-2xl font-bold text-slate-900 mb-2">Pagamento Realizado!</h3>
-                                <p className="text-slate-500 mb-8">A transação foi concluída com sucesso e o registro atualizado.</p>
+
+                                <div className="space-y-3">
+                                    <h3 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Recebimento Efetuado!</h3>
+                                    <p className="text-slate-500 font-medium leading-relaxed px-4">A transação foi registrada no banco de dados e o saldo da clínica atualizado em tempo real.</p>
+                                </div>
+
                                 <button
                                     onClick={() => {
                                         setShowPaymentModal(false);
                                         setPaymentStep('method');
                                         setSelectedPatientId(null);
                                     }}
-                                    className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold shadow-lg"
+                                    className="w-full py-5 bg-blue-600 text-white rounded-[24px] font-black text-sm uppercase tracking-widest shadow-2xl shadow-blue-200 hover:bg-blue-700 transition-all transform active:scale-95"
                                 >
-                                    Concluir e Voltar
+                                    Concluir Faturamento
                                 </button>
                             </div>
                         )}

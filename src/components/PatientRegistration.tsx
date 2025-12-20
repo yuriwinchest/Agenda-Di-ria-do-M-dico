@@ -1,352 +1,283 @@
 import React, { useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { patientService } from '../services/PatientService';
+import { cn } from '../lib/utils';
+import {
+    User,
+    CreditCard,
+    Calendar,
+    ClipboardList,
+    ChevronRight,
+    Search,
+    ShieldCheck,
+    CheckCircle2,
+    Plus
+} from 'lucide-react';
 
 interface PatientRegistrationProps {
-    onBack: () => void;
-    initialData?: any;
+    onClose: () => void;
+    onSuccess?: () => void;
 }
 
-// ... (previous content is matched by line number context in tool, but I can't skip lines in replacement content) ...
-// Wait, I should use separate calls or encompass the whole block.
-// I'll do two replaces. One for interface, one for title.
+const PatientRegistration: React.FC<PatientRegistrationProps> = ({ onClose, onSuccess }) => {
+    const [activeStep, setActiveStep] = useState<'info' | 'billing' | 'schedule'>('info');
+    const [loading, setLoading] = useState(false);
+    const [registeredPatient, setRegisteredPatient] = useState<any>(null);
 
-// Interface:
-interface PatientRegistrationProps {
-    onBack: () => void;
-    onSaveSuccess?: (patient: any) => void;
-    initialData?: any;
-}
-
-const PatientRegistration: React.FC<PatientRegistrationProps> = ({ onBack, onSaveSuccess, initialData }) => {
-    const [activeTab, setActiveTab] = useState<'personal' | 'billing'>('personal');
     const [formData, setFormData] = useState({
-        name: initialData?.name || '',
-        email: initialData?.email || '',
-        phone: initialData?.phone || '',
-        cpf: initialData?.cpf || '',
-        birth_date: initialData?.birth_date || '',
-        gender: initialData?.gender || '',
-        billing_type: initialData?.billing_type || 'Particular',
-        insurance_provider: initialData?.insurance_provider || '',
-        insurance_card_number: initialData?.insurance_card_number || '',
-        preferred_payment_method: initialData?.preferred_payment_method || 'Cartão de Crédito',
-        address: initialData?.address || ''
+        name: '',
+        cpf: '',
+        phone: '',
+        email: '',
+        billing_type: 'Particular' as 'Particular' | 'Convênio',
+        insurance_provider: '',
+        insurance_card_number: '',
+        service: 'Consulta de Rotina',
+        value: 150
     });
 
-    const [loading, setLoading] = useState(false);
+    const handleNext = () => {
+        if (activeStep === 'info') setActiveStep('billing');
+        else if (activeStep === 'billing') handleFinalRegister();
+    };
 
-    const handleSave = async () => {
-        if (!formData.name || !formData.cpf) {
-            alert('Por favor, preencha o nome e o CPF do paciente.');
-            return;
-        }
-
+    const handleFinalRegister = async () => {
         setLoading(true);
         try {
-            let savedPatient = null;
-            if (initialData?.id) {
-                // Update
-                const { data, error } = await supabase
-                    .from('patients')
-                    .update(formData)
-                    .eq('id', initialData.id)
-                    .select()
-                    .single();
-                if (error) throw error;
-                savedPatient = data;
-                alert('Cadastro atualizado com sucesso!');
-            } else {
-                // Insert
-                const { data, error } = await supabase
-                    .from('patients')
-                    .insert([formData])
-                    .select()
-                    .single();
-                if (error) throw error;
-                savedPatient = data;
-                alert('Paciente cadastrado com sucesso!');
-            }
+            // OO Approach: Service handles the logic and events
+            const patient = await patientService.registerPatient({
+                name: formData.name,
+                cpf: formData.cpf,
+                phone: formData.phone,
+                email: formData.email,
+                billing_type: formData.billing_type,
+                insurance_provider: formData.insurance_provider,
+                insurance_card_number: formData.insurance_card_number
+            });
 
-            if (onSaveSuccess && savedPatient) {
-                onSaveSuccess(savedPatient);
-            } else {
-                onBack();
-            }
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await patientService.createConsultation(
+                patient.id,
+                formData.service,
+                formData.value,
+                formData.billing_type
+            );
+
+            setRegisteredPatient(patient);
+            setActiveStep('schedule');
+            if (onSuccess) onSuccess();
         } catch (error: any) {
-            alert('Erro ao salvar: ' + error.message);
+            alert(error.message);
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="flex flex-col gap-6 max-w-4xl mx-auto p-4 animate-in fade-in duration-500 min-h-[600px]">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-3xl font-bold text-slate-900 tracking-tight">{initialData ? 'Editar Cadastro' : 'Novo Cadastro'}</h2>
-                    <p className="mt-1 text-slate-500 font-medium text-sm">Preencha as informações para registro no sistema.</p>
+        <div className="flex flex-col h-full bg-white rounded-[32px] shadow-2xl overflow-hidden border border-slate-100">
+            {/* Steps Header - Responsive & Dynamic */}
+            <div className="bg-slate-50/80 backdrop-blur-md px-8 py-6 border-b border-slate-200">
+                <div className="flex items-center justify-between">
+                    <div className="flex flex-col">
+                        <h2 className="text-xl font-black text-slate-900 tracking-tight">Cadastro Winchester</h2>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Prontuário Digital • V3.0</p>
+                    </div>
+                    <button onClick={onClose} className="p-2.5 hover:bg-slate-200/50 rounded-xl transition-colors">
+                        <Plus className="rotate-45 w-6 h-6 text-slate-400" />
+                    </button>
                 </div>
-                <button
-                    onClick={onBack}
-                    className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl transition-all font-bold text-sm border border-slate-200"
-                >
-                    <span className="material-symbols-outlined text-xl">arrow_back</span>
-                    Voltar
-                </button>
-            </div>
 
-            {/* Tabs Navigation */}
-            <div className="flex items-center gap-1 bg-slate-100 p-1.5 rounded-2xl w-fit">
-                <button
-                    onClick={() => setActiveTab('personal')}
-                    className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === 'personal'
-                        ? 'bg-white text-blue-600 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-700'
-                        }`}
-                >
-                    <span className="material-symbols-outlined text-xl">person</span>
-                    Dados Pessoais
-                </button>
-                <button
-                    onClick={() => setActiveTab('billing')}
-                    className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${activeTab === 'billing'
-                        ? 'bg-white text-blue-600 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-700'
-                        }`}
-                >
-                    <span className="material-symbols-outlined text-xl">payments</span>
-                    Faturamento
-                </button>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden min-h-[400px] flex flex-col">
-                <div className="p-8 flex-1">
-                    {activeTab === 'personal' ? (
-                        <div className="space-y-8 animate-in fade-in slide-in-from-left-4 duration-300">
-                            <div className="flex items-center gap-2 text-slate-400">
-                                <span className="material-symbols-outlined text-xl">person</span>
-                                <h3 className="text-xs font-bold uppercase tracking-widest">Informações Cadastrais</h3>
+                <div className="flex items-center gap-2 mt-8">
+                    {[
+                        { id: 'info', label: 'Dados', icon: User },
+                        { id: 'billing', label: 'Financeiro', icon: CreditCard },
+                        { id: 'schedule', label: 'Finalizado', icon: CheckCircle2 }
+                    ].map((step, idx) => (
+                        <React.Fragment key={step.id}>
+                            <div className={cn(
+                                "flex items-center gap-3 transition-all duration-500",
+                                activeStep === step.id ? "opacity-100 scale-105" : "opacity-40"
+                            )}>
+                                <div className={cn(
+                                    "w-10 h-10 rounded-xl flex items-center justify-center shadow-lg",
+                                    activeStep === step.id ? "bg-blue-600 text-white shadow-blue-200" : "bg-white text-slate-400"
+                                )}>
+                                    <step.icon className="w-5 h-5" strokeWidth={2.5} />
+                                </div>
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em] hidden md:block">{step.label}</span>
                             </div>
+                            {idx < 2 && <div className="flex-1 h-px bg-slate-200 mx-4 max-w-[40px]"></div>}
+                        </React.Fragment>
+                    ))}
+                </div>
+            </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-bold text-slate-700 ml-1 uppercase tracking-wider">Nome Completo</label>
-                                    <input
-                                        type="text"
-                                        className="px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-medium transition-all"
-                                        placeholder="Ex: João da Silva"
-                                        value={formData.name}
-                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    />
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-bold text-slate-700 ml-1 uppercase tracking-wider">CPF</label>
-                                    <input
-                                        type="text"
-                                        className="px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-medium transition-all"
-                                        placeholder="000.000.000-00"
-                                        value={formData.cpf}
-                                        onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
-                                    />
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-bold text-slate-700 ml-1 uppercase tracking-wider">Email</label>
-                                    <input
-                                        type="email"
-                                        className="px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-medium transition-all"
-                                        placeholder="email@exemplo.com"
-                                        value={formData.email}
-                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                    />
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-bold text-slate-700 ml-1 uppercase tracking-wider">WhatsApp / Telefone</label>
-                                    <input
-                                        type="text"
-                                        className="px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-medium transition-all"
-                                        placeholder="(61) 99999-9999"
-                                        value={formData.phone}
-                                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                    />
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-bold text-slate-700 ml-1 uppercase tracking-wider">Data de Nascimento</label>
-                                    <input
-                                        type="date"
-                                        className="px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-medium transition-all"
-                                        value={formData.birth_date}
-                                        onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
-                                    />
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-bold text-slate-700 ml-1 uppercase tracking-wider">Sexo</label>
-                                    <select
-                                        className="px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-                                        value={formData.gender}
-                                        onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                                    >
-                                        <option value="">Selecione...</option>
-                                        <option value="Masculino">Masculino</option>
-                                        <option value="Feminino">Feminino</option>
-                                        <option value="Outro">Outro</option>
-                                    </select>
-                                </div>
-                                <div className="flex flex-col gap-2 md:col-span-2">
-                                    <label className="text-xs font-bold text-slate-700 ml-1 uppercase tracking-wider">Endereço Residencial</label>
-                                    <div className="relative">
-                                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">location_on</span>
+            {/* Form Content - Responsive Grid */}
+            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                {activeStep === 'info' && (
+                    <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+                        <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
+                            <span className="w-2 h-6 bg-blue-600 rounded-full"></span>
+                            <h3 className="text-lg font-bold text-slate-900">Informações Pessoais</h3>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome Completo</label>
+                                <input
+                                    className="w-full h-14 px-5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition-all font-bold text-slate-700"
+                                    placeholder="Ex: Yuri Winchester"
+                                    value={formData.name}
+                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">CPF Nacional</label>
+                                <input
+                                    className="w-full h-14 px-5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition-all font-bold text-slate-700"
+                                    placeholder="000.000.000-00"
+                                    value={formData.cpf}
+                                    onChange={e => setFormData({ ...formData, cpf: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Contato WhatsApp</label>
+                                <input
+                                    className="w-full h-14 px-5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition-all font-bold text-slate-700"
+                                    placeholder="(00) 00000-0000"
+                                    value={formData.phone}
+                                    onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">E-mail Corporativo</label>
+                                <input
+                                    className="w-full h-14 px-5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition-all font-bold text-slate-700"
+                                    placeholder="exemplo@clinica.com"
+                                    value={formData.email}
+                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {activeStep === 'billing' && (
+                    <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+                        <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
+                            <span className="w-2 h-6 bg-indigo-600 rounded-full"></span>
+                            <h3 className="text-lg font-bold text-slate-900">Configuração de Cobrança</h3>
+                        </div>
+
+                        <div className="flex p-1.5 bg-slate-100 rounded-[20px] w-full max-w-sm border border-slate-200/50">
+                            <button
+                                onClick={() => setFormData({ ...formData, billing_type: 'Particular' })}
+                                className={cn(
+                                    "flex-1 py-3 px-6 rounded-[14px] text-xs font-black uppercase tracking-widest transition-all",
+                                    formData.billing_type === 'Particular' ? "bg-white text-indigo-600 shadow-xl shadow-indigo-100" : "text-slate-400 hover:text-slate-600"
+                                )}
+                            >Particular</button>
+                            <button
+                                onClick={() => setFormData({ ...formData, billing_type: 'Convênio' })}
+                                className={cn(
+                                    "flex-1 py-3 px-6 rounded-[14px] text-xs font-black uppercase tracking-widest transition-all",
+                                    formData.billing_type === 'Convênio' ? "bg-white text-blue-600 shadow-xl shadow-blue-100" : "text-slate-400 hover:text-slate-600"
+                                )}
+                            >Convênio</button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            {formData.billing_type === 'Convênio' && (
+                                <>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Operadora</label>
+                                        <select
+                                            className="w-full h-14 px-5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition-all font-bold text-slate-700"
+                                            value={formData.insurance_provider}
+                                            onChange={e => setFormData({ ...formData, insurance_provider: e.target.value })}
+                                        >
+                                            <option value="">Selecione a Operadora...</option>
+                                            <option value="Unimed">Unimed Winchester</option>
+                                            <option value="Bradesco">Bradesco Saúde</option>
+                                            <option value="SulAmérica">SulAmérica</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nº Carteirinha</label>
                                         <input
-                                            type="text"
-                                            className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-medium transition-all"
-                                            placeholder="Rua, Número, Bairro, Cidade..."
-                                            value={formData.address}
-                                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                            className="w-full h-14 px-5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition-all font-bold text-slate-700"
+                                            placeholder="0000 0000 0000 0000"
+                                            value={formData.insurance_card_number}
+                                            onChange={e => setFormData({ ...formData, insurance_card_number: e.target.value })}
                                         />
                                     </div>
-                                </div>
+                                </>
+                            )}
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Procedimento Base</label>
+                                <input
+                                    className="w-full h-14 px-5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition-all font-bold text-slate-700"
+                                    value={formData.service}
+                                    onChange={e => setFormData({ ...formData, service: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Valor do Repasse (R$)</label>
+                                <input
+                                    type="number"
+                                    className="w-full h-14 px-5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold text-slate-700"
+                                    value={formData.value}
+                                    onChange={e => setFormData({ ...formData, value: parseInt(e.target.value) })}
+                                />
                             </div>
                         </div>
-                    ) : (
-                        <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2 text-blue-600">
-                                    <span className="material-symbols-outlined text-xl">payments</span>
-                                    <h3 className="text-xs font-bold uppercase tracking-widest">Configuração de Cobrança</h3>
-                                </div>
-                            </div>
+                    </div>
+                )}
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="space-y-6">
-                                    <div className="flex flex-col gap-3">
-                                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider ml-1">Tipo de Recebimento</label>
-                                        <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-2xl">
-                                            {['Particular', 'Convênio'].map(type => (
-                                                <button
-                                                    key={type}
-                                                    onClick={() => setFormData({ ...formData, billing_type: type })}
-                                                    className={`py-3 rounded-xl font-bold text-sm transition-all ${formData.billing_type === type
-                                                        ? 'bg-white text-blue-600 shadow-sm ring-1 ring-slate-200'
-                                                        : 'text-slate-500 hover:text-slate-700'
-                                                        }`}
-                                                >
-                                                    {type}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {formData.billing_type === 'Convênio' ? (
-                                        <div className="space-y-4 animate-in slide-in-from-top-4 duration-300">
-                                            <div className="flex flex-col gap-2">
-                                                <label className="text-xs font-bold text-slate-700 ml-1 uppercase tracking-wider">Plano de Saúde</label>
-                                                <select
-                                                    className="px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-medium appearance-none"
-                                                    value={formData.insurance_provider}
-                                                    onChange={(e) => setFormData({ ...formData, insurance_provider: e.target.value })}
-                                                >
-                                                    <option value="">Selecione o plano...</option>
-                                                    <option value="Unimed">Unimed</option>
-                                                    <option value="Bradesco">Bradesco Saúde</option>
-                                                    <option value="Sulamérica">Sulamérica</option>
-                                                    <option value="Amil">Amil</option>
-                                                    <option value="Cassi">Cassi</option>
-                                                </select>
-                                            </div>
-                                            <div className="flex flex-col gap-2">
-                                                <label className="text-xs font-bold text-slate-700 ml-1 uppercase tracking-wider">Matrícula / Carteirinha</label>
-                                                <input
-                                                    type="text"
-                                                    className="px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-medium transition-all"
-                                                    placeholder="Número da carteirinha"
-                                                    value={formData.insurance_card_number}
-                                                    onChange={(e) => setFormData({ ...formData, insurance_card_number: e.target.value })}
-                                                />
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-4 animate-in slide-in-from-top-4 duration-300">
-                                            <label className="text-xs font-bold text-slate-700 ml-1 uppercase tracking-wider">Forma de Pagamento Preferencial</label>
-                                            <div className="grid grid-cols-1 gap-2">
-                                                {['Cartão', 'Dinheiro', 'PIX'].map(method => (
-                                                    <button
-                                                        key={method}
-                                                        onClick={() => setFormData({ ...formData, preferred_payment_method: method })}
-                                                        className={`p-4 rounded-xl border-2 font-bold text-sm flex items-center justify-between transition-all ${formData.preferred_payment_method === method
-                                                            ? 'border-blue-600 bg-blue-50 text-blue-600'
-                                                            : 'border-slate-50 bg-slate-50 text-slate-400 hover:border-slate-100'
-                                                            }`}
-                                                    >
-                                                        <div className="flex items-center gap-3">
-                                                            <span className="material-symbols-outlined">
-                                                                {method === 'Cartão' ? 'credit_card' : method === 'Dinheiro' ? 'payments' : 'qr_code_2'}
-                                                            </span>
-                                                            {method}
-                                                        </div>
-                                                        {formData.preferred_payment_method === method && <span className="material-symbols-outlined text-blue-600">check_circle</span>}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="bg-blue-50 p-6 rounded-2xl flex flex-col justify-center gap-4">
-                                    <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mb-2">
-                                        <span className="material-symbols-outlined text-2xl">info</span>
-                                    </div>
-                                    <h4 className="font-bold text-blue-900">Configuração de Atendimento</h4>
-                                    <p className="text-sm text-blue-700 leading-relaxed">
-                                        As configurações de faturamento definidas aqui serão aplicadas automaticamente nos próximos agendamentos deste paciente.
-                                    </p>
-                                    <div className="pt-4 border-t border-blue-200 mt-2">
-                                        <div className="flex items-center gap-2 text-blue-800 font-bold text-xs uppercase tracking-wider">
-                                            <span className="material-symbols-outlined text-sm">event_available</span>
-                                            Atividade Recente
-                                        </div>
-                                        <p className="text-xs text-blue-600 mt-1 italic">Nenhum atendimento registrado anteriormente.</p>
-                                    </div>
-                                </div>
-                            </div>
+                {activeStep === 'schedule' && (
+                    <div className="flex flex-col items-center justify-center h-full text-center space-y-6 animate-in zoom-in duration-500">
+                        <div className="w-24 h-24 bg-emerald-100/50 rounded-[40px] flex items-center justify-center shadow-xl shadow-emerald-50">
+                            <CheckCircle2 className="w-12 h-12 text-emerald-600" />
                         </div>
+                        <div className="space-y-2">
+                            <h3 className="text-2xl font-black text-slate-900 tracking-tight">Paciente Vinculado!</h3>
+                            <p className="text-sm font-bold text-slate-400 max-w-xs">{registeredPatient?.name} foi cadastrado com sucesso e já está disponível na fila do faturamento.</p>
+                        </div>
+                        <div className="bg-slate-50 p-6 rounded-[28px] border border-slate-100 flex flex-col items-center gap-4 w-full max-w-sm">
+                            <div className="flex items-center gap-4 w-full">
+                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm">
+                                    <ShieldCheck className="w-6 h-6 text-blue-600" />
+                                </div>
+                                <div className="flex-1 text-left">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Guia Padrão</p>
+                                    <p className="text-xs font-bold text-slate-700">TISS Aguardando Liberação</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={onClose}
+                                className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-slate-200 active:scale-95 transition-all mt-4"
+                            >Concluir e Voltar</button>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Footer Actions */}
+            {activeStep !== 'schedule' && (
+                <div className="p-8 border-t border-slate-100 bg-white md:bg-transparent">
+                    <button
+                        onClick={handleNext}
+                        disabled={loading}
+                        className="w-full py-5 bg-blue-600 text-white rounded-[24px] font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-blue-100 flex items-center justify-center gap-4 hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50"
+                    >
+                        {loading ? 'Processando...' : (activeStep === 'info' ? 'Avançar para Financeiro' : 'Finalizar Cadastro')}
+                        {!loading && <ChevronRight className="w-5 h-5" strokeWidth={3} />}
+                    </button>
+                    {activeStep === 'billing' && (
+                        <button
+                            onClick={() => setActiveStep('info')}
+                            className="w-full mt-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors"
+                        >Voltar aos dados</button>
                     )}
                 </div>
-
-                {/* Footer with Actions */}
-                <div className="p-6 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-4">
-                    <p className="text-xs text-slate-500 font-medium">
-                        * Campos obrigatórios: Nome Completo e CPF.
-                    </p>
-                    <div className="flex items-center gap-3">
-                        {activeTab === 'personal' ? (
-                            <button
-                                onClick={() => setActiveTab('billing')}
-                                className="px-6 py-3 bg-white text-slate-700 rounded-xl font-bold text-sm hover:bg-slate-100 transition-all border border-slate-200 flex items-center gap-2"
-                            >
-                                Próximo: Faturamento
-                                <span className="material-symbols-outlined text-lg">chevron_right</span>
-                            </button>
-                        ) : (
-                            <button
-                                onClick={() => setActiveTab('personal')}
-                                className="px-6 py-3 bg-white text-slate-700 rounded-xl font-bold text-sm hover:bg-slate-100 transition-all border border-slate-200 flex items-center gap-2"
-                            >
-                                <span className="material-symbols-outlined text-lg">chevron_left</span>
-                                Voltar para Dados
-                            </button>
-                        )}
-                        <button
-                            onClick={handleSave}
-                            disabled={loading}
-                            className="bg-slate-900 text-white px-8 py-3 rounded-xl font-bold text-sm hover:bg-slate-800 transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 min-w-[180px]"
-                        >
-                            <span className="material-symbols-outlined text-lg">{loading ? 'sync' : 'save'}</span>
-                            {loading ? 'Salvando...' : 'Salvar e Agendar'}
-                        </button>
-                    </div>
-                </div>
-            </div>
+            )}
         </div>
     );
 };
