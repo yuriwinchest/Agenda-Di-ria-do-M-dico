@@ -81,8 +81,8 @@ const App: React.FC = () => {
           currentView === 'teleconsultation' ? "p-0" : "p-4 lg:p-6"
         )}>
           <div className={cn(
-            "h-full flex flex-col",
-            currentView === 'teleconsultation' ? "max-w-none" : "max-w-7xl mx-auto"
+            "flex flex-col",
+            currentView === 'teleconsultation' ? "max-w-none min-h-full" : "max-w-7xl mx-auto h-full"
           )}>
             {renderView()}
           </div>

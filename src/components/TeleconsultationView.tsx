@@ -27,7 +27,11 @@ const TeleconsultationView: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [activePatient, setActivePatient] = useState<any>(null);
     const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-    const [copied, setCopied] = useState(false);
+    const [activeTab, setActiveTab] = useState('Evolução');
+    const [evolutionText, setEvolutionText] = useState('');
+    const [prescriptionText, setPrescriptionText] = useState('');
+    const [examsText, setExamsText] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
 
     const localVideoRef = useRef<HTMLVideoElement>(null);
 
@@ -89,8 +93,39 @@ const TeleconsultationView: React.FC = () => {
         setTimeout(() => setCopied(false), 2000);
     };
 
+    const saveMedicalRecord = async () => {
+        if (!activePatient) return;
+        setIsSaving(true);
+        try {
+            const table = activeTab === 'Evolução' ? 'medical_evolutions' :
+                activeTab === 'Prescrições' ? 'prescriptions' : 'exam_requests';
+
+            const content = activeTab === 'Evolução' ? evolutionText :
+                activeTab === 'Prescrições' ? prescriptionText : examsText;
+
+            const payload: any = {
+                appointment_id: activePatient.id,
+                patient_id: activePatient.patient_id,
+                doctor_id: activePatient.doctor_id,
+            };
+
+            if (activeTab === 'Evolução') payload.content = content;
+            else if (activeTab === 'Prescrições') payload.medications = [{ text: content }];
+            else payload.exams = [{ text: content }];
+
+            const { error } = await supabase.from(table).insert([payload]);
+            if (error) throw error;
+            alert(`${activeTab} salva com sucesso!`);
+        } catch (e) {
+            console.error(e);
+            alert('Erro ao salvar registro.');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     return (
-        <div className="flex flex-col h-full bg-slate-50/10 overflow-hidden animate-in fade-in duration-1000">
+        <div className="flex flex-col min-h-full bg-slate-50/10 animate-in fade-in duration-1000">
             {/* Immersive Header */}
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 px-6 mb-4 shrink-0 pt-4">
                 <div className="flex items-center gap-4">
@@ -141,7 +176,7 @@ const TeleconsultationView: React.FC = () => {
             </div>
 
             {/* Immersive Stage Area */}
-            <div className="flex-1 flex flex-col lg:flex-row gap-4 p-4 pt-0 lg:px-6 min-h-0 overflow-hidden mb-2">
+            <div className="flex-1 flex flex-col lg:flex-row gap-4 p-4 pt-0 lg:px-6 mb-2">
                 {/* Left: Video Stage + Medical Notes */}
                 <div className="flex-[1.4] flex flex-col gap-4 min-h-0 min-w-0">
 
@@ -239,31 +274,77 @@ const TeleconsultationView: React.FC = () => {
                     </div>
 
                     {/* Bottom Utility (Notes) Area */}
-                    <div className="flex-1 bg-white rounded-[40px] border border-slate-100 shadow-xl flex flex-col overflow-hidden min-h-[220px]">
-                        <div className="flex items-center gap-6 px-8 pt-4 border-b border-slate-50 shrink-0">
-                            {['Evolução', 'Prescrições', 'Exames', 'Anexos'].map((tab, i) => (
-                                <button key={tab} className={cn(
-                                    "pb-4 font-black text-[9px] uppercase tracking-widest transition-all relative",
-                                    i === 0 ? "text-blue-600" : "text-slate-400 hover:text-slate-600"
-                                )}>
-                                    {tab}
-                                    {i === 0 && <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-600 rounded-full"></div>}
-                                </button>
-                            ))}
+                    <div className="flex-1 bg-white rounded-[40px] border border-slate-100 shadow-xl flex flex-col min-h-[400px]">
+                        <div className="flex items-center justify-between px-8 pt-4 border-b border-slate-50 shrink-0">
+                            <div className="flex items-center gap-6">
+                                {['Evolução', 'Prescrições', 'Exames', 'Anexos'].map((tab) => (
+                                    <button
+                                        key={tab}
+                                        onClick={() => setActiveTab(tab)}
+                                        className={cn(
+                                            "pb-4 font-black text-[9px] uppercase tracking-widest transition-all relative",
+                                            activeTab === tab ? "text-blue-600" : "text-slate-400 hover:text-slate-600"
+                                        )}
+                                    >
+                                        {tab}
+                                        {activeTab === tab && <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-600 rounded-full"></div>}
+                                    </button>
+                                ))}
+                            </div>
+                            <button
+                                onClick={saveMedicalRecord}
+                                disabled={isSaving || !activePatient}
+                                className="mb-4 px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-slate-800 transition-all disabled:opacity-50"
+                            >
+                                {isSaving ? "Salvando..." : "Salvar Registro"}
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                            </button>
                         </div>
                         <div className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-y-auto custom-scrollbar">
                             <div className="lg:col-span-4 space-y-3">
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">Motivo Principal</p>
-                                <div className="bg-slate-50/50 p-6 rounded-3xl italic text-slate-600 text-xs leading-relaxed border border-slate-100">
-                                    "Paciente relata sintomas persistentes há 3 dias..."
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">Contexto do Paciente</p>
+                                <div className="bg-slate-50/50 p-6 rounded-3xl text-slate-600 text-xs leading-relaxed border border-slate-100">
+                                    <p className="font-bold text-slate-900 mb-2 uppercase text-[10px]">Motivo Principal:</p>
+                                    <p className="italic">"{activePatient?.observations || 'Não informado'}"</p>
+
+                                    <div className="mt-4 pt-4 border-t border-slate-100">
+                                        <p className="font-bold text-slate-900 mb-2 uppercase text-[10px]">Status:</p>
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                                            <span className="text-[10px] font-black uppercase">Pronto para {activeTab}</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div className="lg:col-span-8 flex flex-col">
-                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-3">Anotações Winchester Health</p>
-                                <textarea
-                                    className="flex-1 bg-slate-50 border border-slate-100 rounded-3xl p-6 text-xs font-medium outline-none focus:bg-white focus:ring-1 focus:ring-blue-100 transition-all resize-none"
-                                    placeholder="Inicie o registro eletrônico aqui..."
-                                ></textarea>
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-3">
+                                    {activeTab === 'Evolução' ? 'Notas de Evolução Clínica' :
+                                        activeTab === 'Prescrições' ? 'Prescrição de Medicamentos' :
+                                            activeTab === 'Exames' ? 'Solicitação de Exames Complementares' : 'Anexos e Documentos'}
+                                </p>
+                                {activeTab === 'Anexos' ? (
+                                    <div className="flex-1 bg-slate-50 border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center p-8 text-center gap-4">
+                                        <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm">
+                                            <ExternalLink className="w-8 h-8 text-slate-300" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-slate-500">Arraste arquivos aqui para anexar</p>
+                                            <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-widest">PDF, JPG ou PNG até 10MB</p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <textarea
+                                        className="flex-1 bg-slate-50 border border-slate-100 rounded-3xl p-6 text-xs font-medium outline-none focus:bg-white focus:ring-1 focus:ring-blue-100 transition-all resize-none min-h-[250px]"
+                                        placeholder={`Inicie o registro de ${activeTab.toLowerCase()} aqui...`}
+                                        value={activeTab === 'Evolução' ? evolutionText :
+                                            activeTab === 'Prescrições' ? prescriptionText : examsText}
+                                        onChange={(e) => {
+                                            if (activeTab === 'Evolução') setEvolutionText(e.target.value);
+                                            else if (activeTab === 'Prescrições') setPrescriptionText(e.target.value);
+                                            else setExamsText(e.target.value);
+                                        }}
+                                    ></textarea>
+                                )}
                             </div>
                         </div>
                     </div>
