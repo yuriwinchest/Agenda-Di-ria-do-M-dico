@@ -22,6 +22,7 @@ import {
 
 const InsuranceManagement: React.FC = () => {
     const [insurances, setInsurances] = useState<any[]>([]);
+    const [tussProcedures, setTussProcedures] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [isAddingNew, setIsAddingNew] = useState(false);
